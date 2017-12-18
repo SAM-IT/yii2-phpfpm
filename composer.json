@@ -1,0 +1,29 @@
+{
+    "name": "sam-it/yii2-phpfpm",
+    "description": "Create a docker container for your Yii2 APP",
+    "type": "yii2-extension",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sam Mousa",
+            "email": "sam@mousa.nl"
+        }
+    ],
+    "require": {
+        "docker-php/docker-php": "^1.24"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SamIT\\Yii2\\PhpFpm\\": "src/"
+        }
+    },
+    "require-dev": {
+        "yiisoft/yii2": "^2"
+    }
+}
