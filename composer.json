@@ -3,6 +3,8 @@
     "description": "Create a docker container for your Yii2 APP",
     "type": "yii2-extension",
     "license": "MIT",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "authors": [
         {
             "name": "Sam Mousa",
@@ -10,7 +12,9 @@
         }
     ],
     "require": {
-        "docker-php/docker-php": "^1.24"
+        "docker-php/docker-php-api": "^4.1.25",
+        "docker-php/docker-php": "dev-2.0-dev",
+        "codeception/codeception": "^2.3"
     },
     "repositories": [
         {

@@ -3,7 +3,12 @@
 
 namespace SamIT\Yii2\PhpFpm;
 
-require_once  __DIR__ . '/../vendor/autoload.php';
+use Docker\Context\Context;
+use Docker\Context\ContextBuilder;
+use Docker\Context\ContextInterface;
+use yii\helpers\FileHelper;
+
+require_once __DIR__ . '/../vendor/autoload.php';
 class Module extends \yii\base\Module
 {
 
@@ -18,7 +23,7 @@ class Module extends \yii\base\Module
      *
      */
     public $environmentVariables = [
-//        'REDIS_HOST',
+        'REDIS_HOST',
 //        'DB_HOST',
 //        'DB_USER',
 //        'DB_PASS'
@@ -77,7 +82,7 @@ class Module extends \yii\base\Module
     /**
      * @return string A PHP-FPM config file.
      */
-    public function createFpmConfig()
+    protected function createFpmConfig()
     {
         $config = [];
         // Add global directives.
@@ -111,7 +116,7 @@ class Module extends \yii\base\Module
     /**
      * @return string A shell script that checks for existence of (non-empty) variables and runs php-fpm.
      */
-    public function createEntrypoint()
+    protected function createEntrypoint(): string
     {
         $result = [];
         $result[] = '#!/bin/sh';
@@ -148,25 +153,35 @@ SH;
         return implode("\n", $result);
     }
 
-    public function createDockerFile()
+    public function createBuildContext(): Context
     {
+        static $builder;
+        $builder = new ContextBuilder();
+        $builder->from('alpine:edge');
         $packages = [
-            'php7', 'php7-fpm', 'ca-certificates', 'tini'
+            'php7',
+            'php7-fpm',
+            'tini',
+            'ca-certificates'
         ];
         foreach ($this->extensions as $extension) {
             $packages[] = "php7-$extension";
         }
+        $builder->run('apk add --update --no-cache ' . implode(' ', $packages));
+        $builder->volume('/runtime');
+        $builder->add('/entrypoint.sh', $this->createEntrypoint());
+        $builder->run('chmod +x /entrypoint.sh');
+        $builder->add('/php-fpm.conf', $this->createFpmConfig());
+        $builder->run("php-fpm7 --force-stderr --fpm-config /php-fpm.conf -t");
+        $builder->entrypoint('["/sbin/tini", "--", "/entrypoint.sh"]');
 
-        $result = [];
-        $result[] = "FROM alpine:edge";
-        $result[] = "RUN apk add --update --no-cache " . implode(' ', $packages);
-        $result[] = "VOLUME /runtime";
-        $result[] = "COPY entrypoint.sh /entrypoint.sh";
-        $result[] = "COPY php-fpm.conf /php-fpm.conf";
-        $result[] = "RUN php-fpm7 --force-stderr --fpm-config /php-fpm.conf -t";
-        $result[] = 'ENTRYPOINT ["/sbin/tini", "--", "/entrypoint.sh"]';
-        $result[] = "";
+        // Add the actual source code.
+        $root = \Yii::getAlias('@app');
+        foreach(FileHelper::findFiles($root, ['recursive' => true]) as $file) {
+            echo '.';
+            $builder->addFile(strtr($file, [$root => '/project']), $file);
+        }
 
-        return implode("\n", $result);
+        return $builder->getContext();
     }
 }
