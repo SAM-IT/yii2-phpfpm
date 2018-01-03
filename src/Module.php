@@ -22,12 +22,7 @@ class Module extends \yii\base\Module
      * @var string[] List of required environment variables. If one is missing the container will exit.
      *
      */
-    public $environmentVariables = [
-        'REDIS_HOST',
-//        'DB_HOST',
-//        'DB_USER',
-//        'DB_PASS'
-    ];
+    public $environmentVariables = [];
 
     /**
      * @var array Pool directives
@@ -79,6 +74,16 @@ class Module extends \yii\base\Module
         'curl'
     ];
 
+    /**
+     * @var Name and optionally tag of the image.
+     * 
+     */
+    public $image;
+
+    /**
+     * @var string Location of composer.json / composer.lock
+     */
+    public $composerFilePath = '@app/../';
     /**
      * @return string A PHP-FPM config file.
      */
@@ -157,6 +162,29 @@ SH;
     {
         static $builder;
         $builder = new ContextBuilder();
+
+        /**
+         * BEGIN COMPOSER
+         */
+        $builder->from('composer');
+        $builder->addFile('/build/composer.json', \Yii::getAlias($this->composerFilePath) .'/composer.json');
+        if (file_exists(\Yii::getAlias($this->composerFilePath) . '/composer.lock')) {
+            $builder->addFile('/build/composer.lock', \Yii::getAlias($this->composerFilePath) . '/composer.lock');
+        }
+
+        $builder->run('cd /build && composer install --no-dev --no-autoloader --ignore-platform-reqs');
+
+
+        // Add the actual source code.
+        $root = \Yii::getAlias('@app');
+        $builder->addFile('/build/' . basename($root), $root);
+        $builder->run('cd /build && composer dumpautoload -o');
+
+        /**
+         * END COMPOSER
+         */
+
+
         $builder->from('alpine:edge');
         $packages = [
             'php7',
@@ -169,19 +197,15 @@ SH;
         }
         $builder->run('apk add --update --no-cache ' . implode(' ', $packages));
         $builder->volume('/runtime');
+        $builder->copy('--from=0 /build', '/project');
         $builder->add('/entrypoint.sh', $this->createEntrypoint());
         $builder->run('chmod +x /entrypoint.sh');
         $builder->add('/php-fpm.conf', $this->createFpmConfig());
         $builder->run("php-fpm7 --force-stderr --fpm-config /php-fpm.conf -t");
         $builder->entrypoint('["/sbin/tini", "--", "/entrypoint.sh"]');
 
-        // Add the actual source code.
-        $root = \Yii::getAlias('@app');
-        foreach(FileHelper::findFiles($root, ['recursive' => true]) as $file) {
-            echo '.';
-            $builder->addFile(strtr($file, [$root => '/project']), $file);
-        }
 
+        $builder->run('find /project | wc -l');
         return $builder->getContext();
     }
 }
