@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 
 namespace SamIT\Yii2\PhpFpm;
 
@@ -115,7 +115,7 @@ class Module extends \yii\base\Module
             }
         }
 
-        return implode("\n", $config);
+        return \implode("\n", $config);
     }
 
     /**
@@ -127,7 +127,7 @@ class Module extends \yii\base\Module
         $result[] = '#!/bin/sh';
         // Check for variables.
         foreach($this->environmentVariables as $name) {
-            $result[] = strtr('if [ -z "${name}" ]; then echo "Variable \${name} is required."; exit 1; fi', [
+            $result[] = \strtr('if [ -z "${name}" ]; then echo "Variable \${name} is required."; exit 1; fi', [
                 '{name}' => $name
             ]);
         }
@@ -155,7 +155,7 @@ SH;
         }
 
         $result[] = 'exec php-fpm7 --force-stderr --fpm-config /php-fpm.conf';
-        return implode("\n", $result);
+        return \implode("\n", $result);
     }
 
     public function createBuildContext(): Context
@@ -168,7 +168,7 @@ SH;
          */
         $builder->from('composer');
         $builder->addFile('/build/composer.json', \Yii::getAlias($this->composerFilePath) .'/composer.json');
-        if (file_exists(\Yii::getAlias($this->composerFilePath) . '/composer.lock')) {
+        if (\file_exists(\Yii::getAlias($this->composerFilePath) . '/composer.lock')) {
             $builder->addFile('/build/composer.lock', \Yii::getAlias($this->composerFilePath) . '/composer.lock');
         }
 
@@ -177,7 +177,7 @@ SH;
 
         // Add the actual source code.
         $root = \Yii::getAlias('@app');
-        $builder->addFile('/build/' . basename($root), $root);
+        $builder->addFile('/build/' . \basename($root), $root);
         $builder->run('cd /build && composer dumpautoload -o');
 
         /**
@@ -195,7 +195,7 @@ SH;
         foreach ($this->extensions as $extension) {
             $packages[] = "php7-$extension";
         }
-        $builder->run('apk add --update --no-cache ' . implode(' ', $packages));
+        $builder->run('apk add --update --no-cache ' . \implode(' ', $packages));
         $builder->volume('/runtime');
         $builder->copy('--from=0 /build', '/project');
         $builder->add('/entrypoint.sh', $this->createEntrypoint());

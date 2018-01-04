@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 
 namespace SamIT\Yii2\PhpFpm\controllers;
 
@@ -21,7 +21,7 @@ class BuildController extends Controller
 {
     public $defaultAction = 'build';
 
-    public function actionBuild()
+    public function actionBuild(): void
     {
         $docker = Docker::create();
 
@@ -30,7 +30,7 @@ class BuildController extends Controller
         $buildStream = $docker->imageBuild($context->toStream(), [
             't' => $this->module->image
         ], Docker::FETCH_STREAM);
-        $buildStream->onFrame(function(BuildInfo $buildInfo) {
+        $buildStream->onFrame(function(BuildInfo $buildInfo): void {
             echo $buildInfo->getStream();
         });
 

@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 
 class ModuleTest extends \Codeception\Test\Unit
 {
@@ -8,14 +8,14 @@ class ModuleTest extends \Codeception\Test\Unit
      */
     protected $module;
 
-    public function _before()
+    public function _before(): void
     {
         parent::_before();
         $this->module = \Yii::$app->getModule('phpFpm');
     }
 
     // tests
-    public function testBuild()
+    public function testBuild(): void
     {
 
         $context = $this->module->createBuildContext();
