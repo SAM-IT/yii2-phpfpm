@@ -29,5 +29,8 @@
     },
     "require-dev": {
         "yiisoft/yii2": "^2"
+    },
+    "scripts": {
+        "test": "./vendor/bin/codecept run --no-interaction"
     }
 }
