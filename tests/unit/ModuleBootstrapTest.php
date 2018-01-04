@@ -3,7 +3,7 @@
 
 use Codeception\Test\Unit;
 
-class BootstrapTest extends Unit
+class ModuleBootstrapTest extends Unit
 {
     // tests
     public function testModuleLoaded()

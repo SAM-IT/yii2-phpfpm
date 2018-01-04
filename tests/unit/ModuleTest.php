@@ -29,5 +29,8 @@ class ModuleTest extends \Codeception\Test\Unit
         $fileName = \preg_replace('#.*ADD (.+?) /entrypoint\.sh.*#s', '$2', $dockerFile);
         $this->assertFileExists($directory . '/' . $fileName);
 
+
+        new \SamIT\Yii2\PhpFpm\ModuleBootstrap();
+
     }
 }

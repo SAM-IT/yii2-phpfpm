@@ -29,9 +29,12 @@
         }
     },
     "require-dev": {
-        "yiisoft/yii2": "^2"
+        "yiisoft/yii2": "^2",
+        "friendsofphp/php-cs-fixer": "^2.9"
     },
     "scripts": {
-        "test": "./vendor/bin/codecept run --no-interaction --coverage-xml"
+        "test": "vendor/bin/codecept run --no-interaction --coverage-xml",
+        "lint": "vendor/bin/php-cs-fixer fix --dry-run --verbose --diff",
+        "lint-fix": "vendor/bin/php-cs-fixer fix --verbose"
     }
 }

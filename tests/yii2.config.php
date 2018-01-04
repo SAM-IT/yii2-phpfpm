@@ -8,7 +8,7 @@ return [
         [
             'name' => 'yii2-phpfpm',
             'version' => 'test',
-            'bootstrap' => \SamIT\Yii2\PhpFpm\Bootstrap::class,
+            'bootstrap' => \SamIT\Yii2\PhpFpm\ModuleBootstrap::class,
 //            'alias' =>
         ]
 

@@ -5,7 +5,7 @@ namespace SamIT\Yii2\PhpFpm;
 use yii\base\Application;
 use yii\base\BootstrapInterface;
 
-class Bootstrap implements BootstrapInterface
+class ModuleBootstrap implements BootstrapInterface
 {
     /**
      * Bootstrap method to be called during application bootstrap stage.
