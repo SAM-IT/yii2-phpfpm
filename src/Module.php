@@ -8,7 +8,6 @@ use Docker\Context\ContextBuilder;
 use Docker\Context\ContextInterface;
 use yii\helpers\FileHelper;
 
-require_once __DIR__ . '/../vendor/autoload.php';
 class Module extends \yii\base\Module
 {
 
