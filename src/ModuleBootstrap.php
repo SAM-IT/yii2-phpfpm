@@ -16,7 +16,7 @@ class ModuleBootstrap implements BootstrapInterface
         if ($app instanceof \yii\console\Application) {
             if (!$app->hasModule("phpFpm")) {
                 $app->setModule("phpFpm", [
-                    'class' => Module::class
+                    'class' => Module::class,
                 ]);
             }
         }

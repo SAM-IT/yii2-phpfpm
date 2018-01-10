@@ -33,12 +33,12 @@ class ModuleTest extends \Codeception\Test\Unit
         new \SamIT\Yii2\PhpFpm\ModuleBootstrap();
     }
 
-    public function testNoMutex()
+    public function testNoMutex(): void
     {
         $this->assertFalse($this->module->getLock(1));
     }
 
-    public function testMutex()
+    public function testMutex(): void
     {
         $this->module->setComponents([
             'mutex' => [
@@ -47,11 +47,11 @@ class ModuleTest extends \Codeception\Test\Unit
         ]);
         $this->assertTrue($this->module->getLock(1));
         // Test you can't get 2.
-        $start = microtime(true);
+        $start = \microtime(true);
 
-        $this->assertFalse($this->module->getLock(1));
+        $this->assertFalse($this->module->getLock(2));
 
-        $this->assertGreaterThan($start + 1, microtime(true));
+        $this->assertGreaterThan($start + 1, \microtime(true));
 
     }
 

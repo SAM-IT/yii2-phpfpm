@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use Docker\API\Model\BuildInfo;
+
 class BuildControllerTest extends \Codeception\Test\Unit
 {
     /**
@@ -15,11 +17,14 @@ class BuildControllerTest extends \Codeception\Test\Unit
     }
 
     // tests
-    public function testBuild(): void
+    public function testCreateBuildStream(): void
     {
-
-        $this->controller->runAction('build');
-
+        $stream = $this->controller->createBuildStream([]);
+        $stream->onFrame(function(BuildInfo $frame): void {
+            codecept_debug($frame->getStream());
+            $this->assertSame('', $frame->getError());
+        });
+        $stream->wait();
     }
 
 

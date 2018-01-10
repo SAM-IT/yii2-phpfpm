@@ -81,10 +81,19 @@ class Module extends \yii\base\Module
     ];
 
     /**
-     * @var Name and optionally tag of the image.
-     * 
+     * @var string The name of the created image.
      */
     public $image;
+
+    /**
+     * @var string The tag of the created image.
+     */
+    public $tag = 'latest';
+
+    /**
+     * @var bool wheter to push successful builds.
+     */
+    public $push = false;
 
     /**
      * @var string Location of composer.json / composer.lock
@@ -225,7 +234,7 @@ SH;
             if ($mutex instanceof Mutex
                 && $mutex->acquire(__CLASS__, $timeout)
             ) {
-                register_shutdown_function(function() use ($mutex) {
+                \register_shutdown_function(function() use ($mutex): void {
                     $mutex->release(__CLASS__);
                 });
                 return true;
