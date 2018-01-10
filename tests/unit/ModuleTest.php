@@ -31,6 +31,28 @@ class ModuleTest extends \Codeception\Test\Unit
 
 
         new \SamIT\Yii2\PhpFpm\ModuleBootstrap();
+    }
+
+    public function testNoMutex()
+    {
+        $this->assertFalse($this->module->getLock(1));
+    }
+
+    public function testMutex()
+    {
+        $this->module->setComponents([
+            'mutex' => [
+                'class' => \yii\mutex\FileMutex::class
+            ]
+        ]);
+        $this->assertTrue($this->module->getLock(1));
+        // Test you can't get 2.
+        $start = microtime(true);
+
+        $this->assertFalse($this->module->getLock(1));
+
+        $this->assertGreaterThan($start + 1, microtime(true));
 
     }
+
 }

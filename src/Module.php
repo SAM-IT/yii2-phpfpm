@@ -5,8 +5,7 @@ namespace SamIT\Yii2\PhpFpm;
 
 use Docker\Context\Context;
 use Docker\Context\ContextBuilder;
-use Docker\Context\ContextInterface;
-use yii\helpers\FileHelper;
+use yii\mutex\Mutex;
 
 class Module extends \yii\base\Module
 {
@@ -15,6 +14,14 @@ class Module extends \yii\base\Module
      * @var bool Whether the container should attempt to run migrations on launch.
      */
     public $runMigrations = false;
+
+    /**
+     * @var bool whether migrations should acquire a lock.
+     * It must be configured in the 'mutex' component of this module or the application
+     * Note that this mutex must be shared between all instances of your application.
+     * Consider using something like redis or mysql mutex.
+     */
+    public $migrationsUseMutex = true;
 
     /**
      * The variables will be populated via the pool config.
@@ -122,6 +129,9 @@ class Module extends \yii\base\Module
      */
     protected function createEntrypoint(): string
     {
+        // Get the route.
+        $route = "{$this->getUniqueId()}/migrate/up";
+
         $result = [];
         $result[] = '#!/bin/sh';
         // Check for variables.
@@ -136,7 +146,7 @@ class Module extends \yii\base\Module
 ATTEMPTS=0
 while [ \$ATTEMPTS -lt 10 ]; do
   # First run migrations.
-  /project/protected/yiic migrate/up --interactive=0
+  /project/protected/yiic $route --interactive=0
   if [ $? -eq 0 ]; then
     echo "Migrations done";
     break;
@@ -206,5 +216,21 @@ SH;
 
         $builder->run('find /project | wc -l');
         return $builder->getContext();
+    }
+
+    public function getLock(int $timeout = 0)
+    {
+        if ($this->has('mutex')) {
+            $mutex = $this->get('mutex');
+            if ($mutex instanceof Mutex
+                && $mutex->acquire(__CLASS__, $timeout)
+            ) {
+                register_shutdown_function(function() use ($mutex) {
+                    $mutex->release(__CLASS__);
+                });
+                return true;
+            }
+        }
+        return false;
     }
 }
