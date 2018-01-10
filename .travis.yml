@@ -15,11 +15,11 @@ matrix:
 
 install:
   - travis_retry composer install
-
+sudo: true
+services:
+  - docker
 script:
   - $TEST_COMMAND
 after_success:
   - if [[ "$COVERAGE" = true ]]; then wget https://scrutinizer-ci.com/ocular.phar; fi
   - if [[ "$COVERAGE" = true ]]; then php ocular.phar code-coverage:upload --format=php-clover tests/_output/coverage.xml; fi
-services:
-  - docker
