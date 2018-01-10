@@ -20,6 +20,19 @@ use yii\helpers\Console;
  */
 class MigrateController extends \yii\console\controllers\MigrateController
 {
+
+    public function stdout($string)
+    {
+        if ($this->isColorEnabled()) {
+            $args = \func_get_args();
+            \array_shift($args);
+            $string = Console::ansiFormat($string, $args);
+        }
+
+        echo $string;
+        return \strlen($string);
+    }
+
     public function beforeAction($action)
     {
         // Obtain lock.

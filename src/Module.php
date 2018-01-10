@@ -195,6 +195,9 @@ SH;
 
         // Add the actual source code.
         $root = \Yii::getAlias('@app');
+        if (!\is_string($root)) {
+            throw new \Exception('Alias @app must be defined.');
+        }
         $builder->addFile('/build/' . \basename($root), $root);
         $builder->run('cd /build && composer dumpautoload -o');
 

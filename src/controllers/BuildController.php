@@ -40,9 +40,15 @@ class BuildController extends Controller
      */
     public $push;
 
+    /**
+     * @var Docker
+     */
+    protected $docker;
+
     public function init(): void
     {
         parent::init();
+        $this->docker = Docker::create();
         $this->push = $this->module->push;
         $this->image = $this->module->image;
         $this->tag = $this->module->tag;
@@ -54,7 +60,8 @@ class BuildController extends Controller
 
         $params = [];
         if (isset($this->image)) {
-            $params['t'] = "{$this->image}:{$this->tag}";
+            $name = "{$this->image}:{$this->tag}";
+            $params['t'] = $name;
         }
         $buildStream = $this->createBuildStream($params);
 
@@ -65,15 +72,19 @@ class BuildController extends Controller
         $buildStream->wait();
         echo "Wait finished\n";
         $buildStream->wait();
+
+        if ($this->push && isset($name)) {
+            $this->docker->imagePush($name);
+        }
     }
 
     public function createBuildStream(array $params = []): BuildStream
     {
-        $docker = Docker::create();
+
         $context = $this->module->createBuildContext();
 
         /** @var BuildStream $buildStream */
-        $buildStream = $docker->imageBuild($context->toStream(), $params, Docker::FETCH_STREAM);
+        $buildStream = $this->docker->imageBuild($context->toStream(), $params, Docker::FETCH_STREAM);
         return $buildStream;
     }
 
@@ -83,7 +94,7 @@ class BuildController extends Controller
         $result = parent::options($actionID);
         switch ($actionID) {
             case 'build':
-//                $result[] = 'push';
+                $result[] = 'push';
                 $result[] = 'image';
                 $result[] = 'tag';
                 break;
@@ -95,7 +106,7 @@ class BuildController extends Controller
     public function optionAliases()
     {
         $result = parent::optionAliases();
-//        $result['p'] = 'push';
+        $result['p'] = 'push';
         $result['t'] = 'tag';
         $result['i'] = 'image';
         return $result;
