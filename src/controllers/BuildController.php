@@ -5,13 +5,18 @@ namespace SamIT\Yii2\PhpFpm\controllers;
 
 
 use Docker\API\Model\BuildInfo;
+use Docker\API\Model\PushImageInfo;
 use Docker\Context\Context;
 use Docker\Context\ContextBuilder;
 use Docker\Context\ContextInterface;
 use Docker\Docker;
 use Docker\Stream\BuildStream;
+use Psr\Http\Message\ResponseInterface;
 use SamIT\Yii2\PhpFpm\Module;
+use yii\base\InvalidConfigException;
 use yii\console\Controller;
+use yii\web\Response;
+use function Clue\StreamFilter\fun;
 
 /**
  * Class BuildController
@@ -45,6 +50,16 @@ class BuildController extends Controller
      */
     protected $docker;
 
+    /**
+     * @var string the user to authenticate against the repository
+     */
+    public $user;
+
+    /**
+     * @var string the password to authenticate against the repository
+     */
+    public $password;
+
     public function init(): void
     {
         parent::init();
@@ -73,8 +88,28 @@ class BuildController extends Controller
         echo "Wait finished\n";
         $buildStream->wait();
 
-        if ($this->push && isset($name)) {
-            $this->docker->imagePush($name);
+        if ($this->push) {
+            if (!isset($name, $this->user, $this->password)) {
+                throw new InvalidConfigException("When using the push option, you must configure or provide user, password and image");
+            }
+            $params = [
+                'X-Registry-Auth' => \base64_encode(\GuzzleHttp\json_encode([
+                    'user' => $this->user,
+                    'password' => $this->password
+                ]))
+            ];
+            $pushResult = $this->docker->imagePush($name, $params ?? [], Docker::FETCH_OBJECT);
+
+            if ($pushResult instanceof ResponseInterface) {
+                throw new \Exception($pushResult->getReasonPhrase() . ':' . $pushResult->getBody()->getContents(), $pushResult->getStatusCode());
+            }
+            /** @var PushImageInfo $pushInfo */
+            $pushInfo = \array_pop($pushResult);
+
+            if (!empty($pushInfo->getError())) {
+                throw new \Exception($pushInfo->getError());
+            }
+
         }
     }
 
@@ -97,6 +132,8 @@ class BuildController extends Controller
                 $result[] = 'push';
                 $result[] = 'image';
                 $result[] = 'tag';
+                $result[] = 'user';
+                $result[] = 'password';
                 break;
 
         }
@@ -109,6 +146,8 @@ class BuildController extends Controller
         $result['p'] = 'push';
         $result['t'] = 'tag';
         $result['i'] = 'image';
+        $result['u'] = 'user';
+        $result['P'] = 'password';
         return $result;
     }
 

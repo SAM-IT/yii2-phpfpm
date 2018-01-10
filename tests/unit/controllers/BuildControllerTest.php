@@ -27,5 +27,21 @@ class BuildControllerTest extends \Codeception\Test\Unit
         $stream->wait();
     }
 
+    public function testBuildNoAuth(): void
+    {
+        $this->expectException(\yii\base\InvalidConfigException::class);
+        $this->controller->run('build');
+    }
+
+    public function testBuildInvalidAuth(): void
+    {
+        $this->expectExceptionMessageRegExp('/requested access to the resource is denied/');
+        /** @var \SamIT\Yii2\PhpFpm\controllers\BuildController $controller */
+        $controller = \Yii::$app->getModule('phpFpm')->createControllerByID('build');
+        $controller->user = 'test';
+        $controller->password = 'password';
+
+        $this->controller->run('build', ['user' => 'test', 'password' => 'pass']);
+    }
 
 }

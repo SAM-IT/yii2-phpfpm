@@ -8,7 +8,9 @@ return [
     'modules' => [
         'phpFpm' => [
             'class' => \SamIT\Yii2\PhpFpm\Module::class,
-            'extensions' => []
+            'extensions' => [],
+            'push' => true,
+            'image' => 'test123',
         ]
     ]
 ];
