@@ -94,7 +94,7 @@ class BuildController extends Controller
             }
             $params = [
                 'X-Registry-Auth' => \base64_encode(\GuzzleHttp\json_encode([
-                    'user' => $this->user,
+                    'username' => $this->user,
                     'password' => $this->password
                 ]))
             ];
