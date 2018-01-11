@@ -41,7 +41,7 @@ class BuildControllerTest extends \Codeception\Test\Unit
         $controller->user = 'test';
         $controller->password = 'password';
 
-        $this->controller->run('build', ['user' => random_bytes(10), 'password' => random_bytes(10)]);
+        $this->controller->run('build', ['user' => \md5(\random_bytes(5)), 'password' => \md5(\random_bytes(5))]);
     }
 
 }

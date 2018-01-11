@@ -178,7 +178,6 @@ SH;
 
     public function createBuildContext(): Context
     {
-        static $builder;
         $builder = new ContextBuilder();
 
         /**
@@ -190,7 +189,7 @@ SH;
             $builder->addFile('/build/composer.lock', \Yii::getAlias($this->composerFilePath) . '/composer.lock');
         }
 
-        $builder->run('cd /build && composer install --no-dev --no-autoloader --ignore-platform-reqs');
+        $builder->run('cd /build && composer install --no-dev --no-autoloader --ignore-platform-reqs --prefer-dist -vvv && rm -rf /root/.composer');
 
 
         // Add the actual source code.
