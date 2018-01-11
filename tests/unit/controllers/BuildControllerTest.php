@@ -35,7 +35,7 @@ class BuildControllerTest extends \Codeception\Test\Unit
 
     public function testBuildInvalidAuth(): void
     {
-        $this->expectExceptionMessageRegExp('/requested access to the resource is denied/');
+        $this->expectExceptionMessageRegExp('/unauthorized: incorrect username or password/');
         /** @var \SamIT\Yii2\PhpFpm\controllers\BuildController $controller */
         $controller = \Yii::$app->getModule('phpFpm')->createControllerByID('build');
         $controller->user = 'test';
