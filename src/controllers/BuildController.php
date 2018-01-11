@@ -15,6 +15,7 @@ use Psr\Http\Message\ResponseInterface;
 use SamIT\Yii2\PhpFpm\Module;
 use yii\base\InvalidConfigException;
 use yii\console\Controller;
+use yii\helpers\Console;
 use yii\web\Response;
 use function Clue\StreamFilter\fun;
 
@@ -111,6 +112,11 @@ class BuildController extends Controller
             }
 
         }
+    }
+
+    public function actionTestClient(): void
+    {
+        $this->stdout("It seems the console client works!\n", Console::FG_GREEN);
     }
 
     public function createBuildStream(array $params = []): BuildStream

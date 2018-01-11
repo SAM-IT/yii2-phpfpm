@@ -5,6 +5,7 @@ namespace SamIT\Yii2\PhpFpm;
 
 use Docker\Context\Context;
 use Docker\Context\ContextBuilder;
+use yii\base\InvalidConfigException;
 use yii\mutex\Mutex;
 
 class Module extends \yii\base\Module
@@ -140,7 +141,7 @@ class Module extends \yii\base\Module
     {
         // Get the route.
         $route = "{$this->getUniqueId()}/migrate/up";
-
+        $script = "/project/{$this->getConsoleEntryScript()}";
         $result = [];
         $result[] = '#!/bin/sh';
         // Check for variables.
@@ -155,7 +156,7 @@ class Module extends \yii\base\Module
 ATTEMPTS=0
 while [ \$ATTEMPTS -lt 10 ]; do
   # First run migrations.
-  /project/protected/yiic $route --interactive=0
+  $script $route --interactive=0
   if [ $? -eq 0 ]; then
     echo "Migrations done";
     break;
@@ -199,7 +200,6 @@ SH;
         }
         $builder->addFile('/build/' . \basename($root), $root);
         $builder->run('cd /build && composer dumpautoload -o');
-
         /**
          * END COMPOSER
          */
@@ -224,8 +224,11 @@ SH;
         $builder->run("php-fpm7 --force-stderr --fpm-config /php-fpm.conf -t");
         $builder->entrypoint('["/sbin/tini", "--", "/entrypoint.sh"]');
 
+        // Test if we can run a console command.
+        $script = "/project/{$this->getConsoleEntryScript()}";
+        $builder->run("$script phpFpm/build/test-client");
 
-        $builder->run('find /project | wc -l');
+
         return $builder->getContext();
     }
 
@@ -243,5 +246,19 @@ SH;
             }
         }
         return false;
+    }
+
+    /**
+     * @throws InvalidConfigException in case the app is not configured as expected
+     * @return string the relative path of the (console) entry script with respect to the project (not app) root.
+     */
+    private function getConsoleEntryScript(): string
+    {
+        $full = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), -1)[0]['file'];
+        $relative = \strtr($full, [\dirname(\Yii::getAlias('@app')) => '']);
+        if ($relative === $full){
+            throw new InvalidConfigException("The console entryscript must be located inside the @app directory.");
+        }
+        return \ltrim($relative, '/');
     }
 }
