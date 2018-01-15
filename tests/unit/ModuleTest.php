@@ -1,6 +1,13 @@
 <?php
 declare(strict_types=1);
 
+use Docker\API\Model\BuildInfo;
+use Docker\API\Normalizer\NormalizerFactory;
+use Symfony\Component\Serializer\Encoder\JsonDecode;
+use Symfony\Component\Serializer\Encoder\JsonEncode;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Serializer;
+
 class ModuleTest extends \Codeception\Test\Unit
 {
     /**
@@ -53,6 +60,36 @@ class ModuleTest extends \Codeception\Test\Unit
 
         $this->assertGreaterThan($start + 1, \microtime(true));
 
+    }
+
+
+    public function testStreamDecode(): void
+    {
+
+        $stream = new \GuzzleHttp\Psr7\BufferStream();
+        $serializer = new Serializer(NormalizerFactory::create(), [
+            new JsonEncoder(new JsonEncode(), new JsonDecode())
+        ]);
+        $buildStream = new \Docker\Stream\BuildStream($stream, $serializer);
+
+        $counter = 0;
+        /** @var BuildInfo[] $frames */
+        $frames = [];
+        $buildStream->onFrame(function(BuildInfo $info) use (&$counter, &$frames): void {
+            $counter++;
+            $frames[] = $info;
+        });
+        $stream->write(\file_get_contents(__DIR__ . '/../data/simple.txt'));
+        $buildStream->wait();
+        $this->assertSame(1, $counter);
+
+
+
+        /** @var BuildInfo $frame */
+        $frame = \array_pop($frames);
+//        var_dump(bin2hex($frame->getStream()));
+//        var_dump(array_slice($frames, -1)[0]);
+//        die();
     }
 
 }

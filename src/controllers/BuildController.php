@@ -72,27 +72,38 @@ class BuildController extends Controller
 
     public function actionBuild(): void
     {
-
+        if ($this->push && !isset($this->image, $this->user, $this->password)) {
+            throw new InvalidConfigException("When using the push option, you must configure or provide user, password and image");
+        }
 
         $params = [];
+
+
         if (isset($this->image)) {
             $name = "{$this->image}:{$this->tag}";
             $params['t'] = $name;
         }
         $buildStream = $this->createBuildStream($params);
-
+        $this->color = true;
         $buildStream->onFrame(function(BuildInfo $buildInfo): void {
-            echo $buildInfo->getStream();
+            $this->stdout($buildInfo->getStream(), Console::FG_CYAN);
+            $this->stdout($buildInfo->getProgress(), Console::FG_YELLOW);
+            $this->stdout($buildInfo->getStatus(), Console::FG_RED);
+            if (!empty($buildInfo->getProgressDetail())) {
+                $this->stdout($buildInfo->getProgressDetail()->getMessage(), Console::FG_YELLOW);
+            }
+            if (!empty($buildInfo->getErrorDetail())) {
+                $this->stdout($buildInfo->getErrorDetail()->getCode() . ':' . $buildInfo->getErrorDetail()->getMessage(), Console::FG_YELLOW);
+            }
+            if (!empty($buildInfo->getError())) {
+                throw new \Exception($buildInfo->getError() . ':' . $buildInfo->getErrorDetail()->getMessage());
+            }
         });
-
         $buildStream->wait();
-        echo "Wait finished\n";
+        $this->stdout("Wait finished\n");
         $buildStream->wait();
 
         if ($this->push) {
-            if (!isset($name, $this->user, $this->password)) {
-                throw new InvalidConfigException("When using the push option, you must configure or provide user, password and image");
-            }
             $params = [
                 'X-Registry-Auth' => \base64_encode(\GuzzleHttp\json_encode([
                     'username' => $this->user,
@@ -123,9 +134,9 @@ class BuildController extends Controller
     {
 
         $context = $this->module->createBuildContext();
-
         /** @var BuildStream $buildStream */
         $buildStream = $this->docker->imageBuild($context->toStream(), $params, Docker::FETCH_STREAM);
+
         return $buildStream;
     }
 
@@ -155,6 +166,18 @@ class BuildController extends Controller
         $result['u'] = 'user';
         $result['P'] = 'password';
         return $result;
+    }
+
+    public function stdout($string)
+    {
+        if ($this->isColorEnabled()) {
+            $args = \func_get_args();
+            \array_shift($args);
+            $string = Console::ansiFormat($string, $args);
+        }
+
+        echo $string;
+        return \strlen($string);
     }
 
 

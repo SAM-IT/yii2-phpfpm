@@ -225,8 +225,8 @@ SH;
         $builder->entrypoint('["/sbin/tini", "--", "/entrypoint.sh"]');
 
         // Test if we can run a console command.
-        $script = "/project/{$this->getConsoleEntryScript()}";
-        $builder->run("$script phpFpm/build/test-client");
+        $script = "[ -f /project/{$this->getConsoleEntryScript()} ]";
+        $builder->run($script);
 
 
         return $builder->getContext();
@@ -257,7 +257,7 @@ SH;
         $full = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), -1)[0]['file'];
         $relative = \strtr($full, [\dirname(\Yii::getAlias('@app')) => '']);
         if ($relative === $full){
-            throw new InvalidConfigException("The console entryscript must be located inside the @app directory.");
+            throw new InvalidConfigException("The console entry script must be located inside the @app directory.");
         }
         return \ltrim($relative, '/');
     }

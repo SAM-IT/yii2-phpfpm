@@ -10,7 +10,7 @@ return [
             'class' => \SamIT\Yii2\PhpFpm\Module::class,
             'extensions' => [],
             'push' => true,
-            'image' => 'test123',
+            'image' => \md5(\random_bytes(5))
         ]
     ]
 ];
