@@ -1,0 +1,61 @@
+{"stream":"Step 1/17 : FROM composer"}
+{"stream":"\n"}
+{"stream":" ---\u003e 360824b45624\n"}
+{"stream":"Step 2/17 : ADD DISK-be4a7b5c22de14b78de11a2bcc4b3aa6 /build/composer.json"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e ce932d2a1680\n"}
+{"stream":"Step 3/17 : ADD DISK-0179e58f9c6733ff37ef38ab7d0319c2 /build/composer.lock"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e d9df4a04626a\n"}
+{"stream":"Step 4/17 : RUN cd /build \u0026\u0026 composer install --no-dev --no-autoloader --ignore-platform-reqs --prefer-dist -vvv \u0026\u0026 rm -rf /root/.composer"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e 8443b61a6929\n"}
+{"stream":"Step 5/17 : ADD DISK-3db9abb094956dc4761f40e458274d70 /build/src"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e 37ce9aab7214\n"}
+{"stream":"Step 6/17 : RUN cd /build \u0026\u0026 composer dumpautoload -o"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e 6678289b19fc\n"}
+{"aux":{"ID":"sha256:6678289b19fc46ea266e3c50849f652483eefa2814202cb74d25d2520e842d44"}}
+{"stream":"Step 7/17 : FROM alpine:edge"}
+{"stream":"\n"}
+{"stream":" ---\u003e 5c4fa780951b\n"}
+{"stream":"Step 8/17 : RUN apk add --update --no-cache php7 php7-fpm tini ca-certificates"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e 3791696f7ec9\n"}
+{"stream":"Step 9/17 : VOLUME /runtime"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e c96cdc12c0a9\n"}
+{"stream":"Step 10/17 : COPY --from=0 /build /project"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e 41cae9f94b8d\n"}
+{"stream":"Step 11/17 : ADD YY3lnj /entrypoint.sh"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e 507ddcb9d4d2\n"}
+{"stream":"Step 12/17 : RUN chmod +x /entrypoint.sh"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e 4ae2a43a5274\n"}
+{"stream":"Step 13/17 : ADD rV5IhQ /php-fpm.conf"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e 43b73ce90605\n"}
+{"stream":"Step 14/17 : RUN php-fpm7 --force-stderr --fpm-config /php-fpm.conf -t"}
+{"stream":"\n"}
+{"stream":" ---\u003e Using cache\n"}
+{"stream":" ---\u003e d813dfd1de1b\n"}
+{"stream":"Step 15/17 : RUN php /project/vendor/codeception/codeception/codecept phpFpm/build/test-client || exit 1"}
+{"stream":"\n"}
+{"stream":" ---\u003e Running in 6bbf2c7f9dc4\n"}
+{"stream":"\u001b[91m\n\u001b[0m"}
+{"stream":"\u001b[91mPHP Fatal error:  Uncaught Error: Call to undefined function Symfony\\Polyfill\\Mbstring\\iconv() in /project/vendor/symfony/polyfill-mbstring/Mbstring.php:113\nStack trace:\n#0 /project/vendor/symfony/polyfill-mbstring/bootstrap.php(19): Symfony\\Polyfill\\Mbstring\\Mbstring::mb_convert_encoding('Command \"phpFpm...', 'UTF-8', 'ASCII')\n#1 /project/vendor/symfony/console/Application.php(1060): mb_convert_encoding('Command \"phpFpm...', 'utf8', 'ASCII')\n#2 /project/vendor/symfony/console/Application.php(736): Symfony\\Component\\Console\\Application-\u003esplitStringByWidth('Command \"phpFpm...', 75)\n#3 /project/vendor/symfony/console/Application.php(714): Symfony\\Component\\Console\\Application-\u003edoRenderException(Object(Symfony\\Component\\Console\\Exception\\CommandNotFoundException), Object(Symfony\\Component\\Console\\Output\\StreamOutput))\n#4 /project/vendor/symfony/console/Application.php(126): Symfony\\Component\\Console\\Application-\u003erenderException(Object(Symfony\\Component\\Console\\Exception\\CommandNotFoundException), Object(Symfony\\Component\\Console\\ in /project/vendor/symfony/polyfill-mbstring/Mbstring.php on line 113\n\u001b[0m"}
+{"errorDetail":{"code":1,"message":"The command '/bin/sh -c php /project/vendor/codeception/codeception/codecept phpFpm/build/test-client || exit 1' returned a non-zero code: 1"},"error":"The command '/bin/sh -c php /project/vendor/codeception/codeception/codecept phpFpm/build/test-client || exit 1' returned a non-zero code: 1"}

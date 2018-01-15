@@ -1,0 +1,1 @@
+{"stream":"\u001b[91 /g/S.php:113\n:\n#0 /pSp.php(19): S\\P\\F\\F::S(-A \"B...-, -UTF-8-, -ASCII-)\n#1 /a/b/c/c/d.p"}
