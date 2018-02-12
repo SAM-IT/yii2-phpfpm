@@ -114,7 +114,7 @@ class BuildController extends Controller
                 throw new \Exception($pushStream->getReasonPhrase() . ':' . $pushStream->getBody()->getContents(), $pushStream->getStatusCode());
             }
 
-            $pushStream->onFrame(function(PushImageInfo $pushImageInfo) {
+            $pushStream->onFrame(function(PushImageInfo $pushImageInfo): void {
                 if (!empty($pushImageInfo->getError())) {
                     throw new \Exception($pushImageInfo->getError());
                 }
