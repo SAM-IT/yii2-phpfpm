@@ -4,20 +4,17 @@ declare(strict_types=1);
 namespace SamIT\Yii2\PhpFpm\controllers;
 
 
+use Docker\API\Model\AuthConfig;
 use Docker\API\Model\BuildInfo;
 use Docker\API\Model\PushImageInfo;
-use Docker\Context\Context;
-use Docker\Context\ContextBuilder;
-use Docker\Context\ContextInterface;
 use Docker\Docker;
 use Docker\Stream\BuildStream;
+use Docker\Stream\PushStream;
 use Psr\Http\Message\ResponseInterface;
 use SamIT\Yii2\PhpFpm\Module;
 use yii\base\InvalidConfigException;
 use yii\console\Controller;
 use yii\helpers\Console;
-use yii\web\Response;
-use function Clue\StreamFilter\fun;
 
 /**
  * Class BuildController
@@ -104,24 +101,27 @@ class BuildController extends Controller
         $buildStream->wait();
 
         if ($this->push) {
+            $authConfig = new AuthConfig();
+            $authConfig->setUsername($this->user);
+            $authConfig->setPassword($this->password);
             $params = [
-                'X-Registry-Auth' => \base64_encode(\GuzzleHttp\json_encode([
-                    'username' => $this->user,
-                    'password' => $this->password
-                ]))
+                'X-Registry-Auth' => $authConfig
             ];
-            $pushResult = $this->docker->imagePush($name, $params ?? [], Docker::FETCH_OBJECT);
+            /** @var PushStream $pushStream */
+            $pushStream = $this->docker->imagePush($name, [], $params ?? [],  Docker::FETCH_OBJECT);
 
-            if ($pushResult instanceof ResponseInterface) {
-                throw new \Exception($pushResult->getReasonPhrase() . ':' . $pushResult->getBody()->getContents(), $pushResult->getStatusCode());
-            }
-            /** @var PushImageInfo $pushInfo */
-            $pushInfo = \array_pop($pushResult);
-
-            if (!empty($pushInfo->getError())) {
-                throw new \Exception($pushInfo->getError());
+            if ($pushStream instanceof ResponseInterface) {
+                throw new \Exception($pushStream->getReasonPhrase() . ':' . $pushStream->getBody()->getContents(), $pushStream->getStatusCode());
             }
 
+            $pushStream->onFrame(function(PushImageInfo $pushImageInfo) {
+                if (!empty($pushImageInfo->getError())) {
+                    throw new \Exception($pushImageInfo->getError());
+                }
+                $this->stdout($pushImageInfo->getProgress(), Console::FG_YELLOW);
+                $this->stdout($pushImageInfo->getStatus(), Console::FG_RED);
+            });
+            $pushStream->wait();
         }
     }
 
@@ -134,10 +134,7 @@ class BuildController extends Controller
     {
 
         $context = $this->module->createBuildContext();
-        /** @var BuildStream $buildStream */
-        $buildStream = $this->docker->imageBuild($context->toStream(), $params, Docker::FETCH_STREAM);
-
-        return $buildStream;
+        return $this->docker->imageBuild($context->toStream(), $params, [], Docker::FETCH_OBJECT);
     }
 
     public function options($actionID)
