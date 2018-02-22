@@ -6,6 +6,7 @@ namespace SamIT\Yii2\PhpFpm;
 use Docker\Context\Context;
 use Docker\Context\ContextBuilder;
 use yii\base\InvalidConfigException;
+use yii\helpers\Console;
 use yii\mutex\Mutex;
 
 class Module extends \yii\base\Module
@@ -25,7 +26,7 @@ class Module extends \yii\base\Module
     public $migrationsUseMutex = true;
 
     /**
-     * The variables will be populated via the pool config.
+     * The variables will be written to /runtime/env.json as JSON, where your application can read them.
      * @var string[] List of required environment variables. If one is missing the container will exit.
      *
      */
@@ -47,7 +48,7 @@ class Module extends \yii\base\Module
         'pm.max_spare_servers' => 3,
         'access.log' => '/proc/self/fd/2',
         'clear_env' => 'yes',
-
+        'catch_workers_output' => 'yes'
     ];
 
     /**
@@ -120,10 +121,6 @@ class Module extends \yii\base\Module
             $poolConfig["php_admin_value[$key]"] = $value;
         }
 
-        foreach($this->environmentVariables as $name) {
-            $poolConfig["env[$name]"] = "$$name";
-        }
-
         if (!empty($poolConfig)) {
             $config[] = '[www]';
             foreach ($poolConfig as $key => $value) {
@@ -172,7 +169,26 @@ if [ \$ATTEMPTS -gt 9 ]; then
 fi
 SH;
         }
+        // Check if runtime directory is writable.
+        $result[] = <<<SH
+    su nobody -s /bin/touch /runtime/testfile && rm /runtime/testfile;
+    if [ $? -ne 0 ]; then
+      echo Runtime directory is not writable;
+      exit 1
+    fi
+SH;
 
+
+
+        // Check if runtime is a tmpfs.
+        $message = Console::ansiFormat('/runtime should really be a tmpfs.', [Console::FG_RED]);
+        $result[] = <<<SH
+mount | grep '/runtime type tmpfs';
+if [ $? -ne 0 ]; then
+  echo $message; 
+fi
+SH;
+        $result[] = 'jq  > /runtime/env.json';
         $result[] = 'exec php-fpm7 --force-stderr --fpm-config /php-fpm.conf';
         return \implode("\n", $result);
     }
@@ -210,12 +226,18 @@ SH;
             'php7',
             'php7-fpm',
             'tini',
-            'ca-certificates'
+            'ca-certificates',
+            /**
+             * @see https://stedolan.github.io/jq/
+             * This is used for converting the env to JSON.
+             */
+            'jq'
         ];
         foreach ($this->extensions as $extension) {
             $packages[] = "php7-$extension";
         }
         $builder->run('apk add --update --no-cache ' . \implode(' ', $packages));
+        $builder->run('mkdir /runtime && chown nobody:nobody /runtime');
         $builder->volume('/runtime');
         $builder->copy('--from=0 /build', '/project');
         $builder->add('/entrypoint.sh', $this->createEntrypoint());
