@@ -188,7 +188,7 @@ if [ $? -ne 0 ]; then
   echo $message; 
 fi
 SH;
-        $result[] = 'jq  > /runtime/env.json';
+        $result[] = 'jq -n env > /runtime/env.json';
         $result[] = 'exec php-fpm7 --force-stderr --fpm-config /php-fpm.conf';
         return \implode("\n", $result);
     }
