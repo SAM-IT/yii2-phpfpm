@@ -50,7 +50,7 @@ class MigrateController extends \yii\console\controllers\MigrateController
     {
         $command = "/project/{$this->module->getConsoleEntryScript()} migrate/up $limit";
         $result = ExitCode::OK;
-        passthru($command, $result);
+        \passthru($command, $result);
         return $result;
     }
 
