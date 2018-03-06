@@ -38,12 +38,13 @@ class MigrateController extends \yii\console\controllers\MigrateController
     {
         // Obtain lock.
         $this->stdout('Waiting for lock...', Console::FG_CYAN);
-        if ($this->module->getLock()) {
-            $this->stdout("OK\n", Console::FG_GREEN);
-        } else {
+        if (!$this->module->getLock()) {
             $this->stdout("FAIL\n", Console::FG_RED);
             return false;
         }
+
+        $this->stdout("OK\n", Console::FG_GREEN);
+        return true;
     }
 
     public function actionUp($limit = 0)
