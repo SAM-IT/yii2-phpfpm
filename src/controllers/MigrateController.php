@@ -11,6 +11,7 @@ use Docker\Docker;
 use Docker\Stream\BuildStream;
 use SamIT\Yii2\PhpFpm\Module;
 use yii\console\Controller;
+use yii\console\ExitCode;
 use yii\helpers\Console;
 
 /**
@@ -43,7 +44,14 @@ class MigrateController extends \yii\console\controllers\MigrateController
             $this->stdout("FAIL\n", Console::FG_RED);
             return false;
         }
-        return parent::beforeAction($action);
+    }
+
+    public function actionUp($limit = 0)
+    {
+        $command = "/project/{$this->module->getConsoleEntryScript()} migrate/up $limit";
+        $result = ExitCode::OK;
+        passthru($command, $result);
+        return $result;
     }
 
 

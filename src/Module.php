@@ -274,7 +274,7 @@ SH;
      * @throws InvalidConfigException in case the app is not configured as expected
      * @return string the relative path of the (console) entry script with respect to the project (not app) root.
      */
-    private function getConsoleEntryScript(): string
+    public function getConsoleEntryScript(): string
     {
         $full = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), -1)[0]['file'];
         $relative = \strtr($full, [\dirname(\Yii::getAlias('@app')) => '']);
