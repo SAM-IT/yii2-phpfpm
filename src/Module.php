@@ -148,6 +148,27 @@ class Module extends \yii\base\Module
             ]);
         }
 
+        // Check if runtime directory is writable.
+        $result[] = <<<SH
+    su nobody -s /bin/touch /runtime/testfile && rm /runtime/testfile;
+    if [ $? -ne 0 ]; then
+      echo Runtime directory is not writable;
+      exit 1
+    fi
+SH;
+
+
+
+        // Check if runtime is a tmpfs.
+        $message = Console::ansiFormat('/runtime should really be a tmpfs.', [Console::FG_RED]);
+        $result[] = <<<SH
+mount | grep '/runtime type tmpfs';
+if [ $? -ne 0 ]; then
+  echo $message; 
+fi
+SH;
+        $result[] = 'jq -n env > /runtime/env.json';
+
         if ($this->runMigrations) {
             $result[] = <<<SH
 ATTEMPTS=0
@@ -169,26 +190,7 @@ if [ \$ATTEMPTS -gt 9 ]; then
 fi
 SH;
         }
-        // Check if runtime directory is writable.
-        $result[] = <<<SH
-    su nobody -s /bin/touch /runtime/testfile && rm /runtime/testfile;
-    if [ $? -ne 0 ]; then
-      echo Runtime directory is not writable;
-      exit 1
-    fi
-SH;
 
-
-
-        // Check if runtime is a tmpfs.
-        $message = Console::ansiFormat('/runtime should really be a tmpfs.', [Console::FG_RED]);
-        $result[] = <<<SH
-mount | grep '/runtime type tmpfs';
-if [ $? -ne 0 ]; then
-  echo $message; 
-fi
-SH;
-        $result[] = 'jq -n env > /runtime/env.json';
         $result[] = 'exec php-fpm7 --force-stderr --fpm-config /php-fpm.conf';
         return \implode("\n", $result);
     }
