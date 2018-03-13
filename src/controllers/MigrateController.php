@@ -49,10 +49,15 @@ class MigrateController extends \yii\console\controllers\MigrateController
 
     public function actionUp($limit = 0)
     {
-        $command = "/project/{$this->module->getConsoleEntryScript()} migrate/up $limit";
+        $command = "/project/{$this->module->getConsoleEntryScript()} migrate/up";
+        if ($limit != 0) {
+            $command .= " $limit";
+        }
+
         if (!$this->interactive) {
             $command .= ' --interactive=0';
         }
+        $this->stdout("Executing: $command\n", Console::FG_CYAN);
         $result = ExitCode::OK;
         \passthru($command, $result);
         return $result;
