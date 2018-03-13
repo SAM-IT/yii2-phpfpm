@@ -50,7 +50,7 @@ class MigrateController extends \yii\console\controllers\MigrateController
     public function actionUp($limit = 0)
     {
         $command = "/project/{$this->module->getConsoleEntryScript()} migrate/up";
-        if ($limit != 0) {
+        if ($limit > 0) {
             $command .= " $limit";
         }
 
