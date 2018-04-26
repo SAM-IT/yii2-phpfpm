@@ -6,9 +6,20 @@ namespace SamIT\Yii2\PhpFpm;
 use Docker\Context\Context;
 use Docker\Context\ContextBuilder;
 use yii\base\InvalidConfigException;
+use yii\base\UnknownPropertyException;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Console;
 use yii\mutex\Mutex;
 
+/**
+ * Class Module
+ * @package SamIT\Yii2\PhpFpm
+ * @property-write string[] $additionalPackages
+ * @property-write string[] $additionalExtensions
+ * @property-write string|int[] $additionalPoolConfig
+ * @property-write string[] $additionalPhpConfig
+ * @property-write string[] $additionalFpmConfig
+ */
 class Module extends \yii\base\Module
 {
 
@@ -69,6 +80,24 @@ class Module extends \yii\base\Module
         'daemonize' => 'no',
     ];
 
+    /**
+     * List of OS packages to install
+     */
+    public $packages = [
+        'php7',
+        'php7-fpm',
+        'tini',
+        'ca-certificates',
+        /**
+         * @see https://stedolan.github.io/jq/
+         * This is used for converting the env to JSON.
+         */
+        'jq'
+    ];
+
+    /**
+     * List of php extensions to install
+     */
     public $extensions = [
         'ctype',
         'gd',
@@ -224,17 +253,8 @@ SH;
 
 
         $builder->from('alpine:edge');
-        $packages = [
-            'php7',
-            'php7-fpm',
-            'tini',
-            'ca-certificates',
-            /**
-             * @see https://stedolan.github.io/jq/
-             * This is used for converting the env to JSON.
-             */
-            'jq'
-        ];
+        $packages = $this->packages;
+
         foreach ($this->extensions as $extension) {
             $packages[] = "php7-$extension";
         }
@@ -284,5 +304,23 @@ SH;
             throw new InvalidConfigException("The console entry script must be located inside the @app directory.");
         }
         return \ltrim($relative, '/');
+    }
+
+
+    public function __set($name, $value)
+    {
+        if (strncmp($name, 'additional', 10) === 0) {
+            $this->add(lcfirst(substr($name, 10)), $value);
+        } else {
+            parent::__set($name, $value);
+        }
+    }
+
+    private function add($name, array $value)
+    {
+        if (!property_exists($this, $name)) {
+            throw new UnknownPropertyException("Unknown property $name");
+        }
+        $this->$name = ArrayHelper::merge($this->$name, $value);
     }
 }
