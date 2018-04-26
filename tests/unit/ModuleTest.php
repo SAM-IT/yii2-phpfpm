@@ -95,19 +95,19 @@ class ModuleTest extends \Codeception\Test\Unit
     {
         $this->module->packages = ['def'];
         $this->module->additionalPackages = ['abc'];
-        $this->assertEquals(['def', 'abc'], $this->module->packages);
+        $this->assertSame(['def', 'abc'], $this->module->packages);
 
         $this->module->extensions = ['def'];
         $this->module->additionalExtensions = ['abc'];
 
         $this->module->fpmConfig = ['a' => 'c'];
         $this->module->additionalFpmConfig = ['a' => 'b'];
-        $this->assertEquals(['a' => 'b'], $this->module->fpmConfig);
+        $this->assertSame(['a' => 'b'], $this->module->fpmConfig);
 
 
         $this->module->poolConfig = ['a' => 'b', 'c' => 'd'];
         $this->module->additionalPoolConfig = ['e' => 'f'];
-        $this->assertEquals(['a' => 'b', 'c' => 'd', 'e' => 'f'], $this->module->poolConfig);
+        $this->assertSame(['a' => 'b', 'c' => 'd', 'e' => 'f'], $this->module->poolConfig);
     }
 
 }

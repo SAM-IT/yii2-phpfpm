@@ -307,18 +307,18 @@ SH;
     }
 
 
-    public function __set($name, $value)
+    public function __set($name, $value): void
     {
-        if (strncmp($name, 'additional', 10) === 0) {
-            $this->add(lcfirst(substr($name, 10)), $value);
+        if (\strncmp($name, 'additional', 10) === 0) {
+            $this->add(\lcfirst(\substr($name, 10)), $value);
         } else {
             parent::__set($name, $value);
         }
     }
 
-    private function add($name, array $value)
+    private function add($name, array $value): void
     {
-        if (!property_exists($this, $name)) {
+        if (!\property_exists($this, $name)) {
             throw new UnknownPropertyException("Unknown property $name");
         }
         $this->$name = ArrayHelper::merge($this->$name, $value);
