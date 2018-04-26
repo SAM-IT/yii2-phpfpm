@@ -137,11 +137,9 @@ class Module extends \yii\base\Module
     {
         $config = [];
         // Add global directives.
-        if (!empty($this->fpmConfig)) {
-            $config[] = '[global]';
-            foreach ($this->fpmConfig as $key => $value) {
-                $config[] = "$key = $value";
-            }
+        $config[] = '[global]';
+        foreach ($this->fpmConfig as $key => $value) {
+            $config[] = "$key = $value";
         }
 
         // Add pool directives.
@@ -150,11 +148,9 @@ class Module extends \yii\base\Module
             $poolConfig["php_admin_value[$key]"] = $value;
         }
 
-        if (!empty($poolConfig)) {
-            $config[] = '[www]';
-            foreach ($poolConfig as $key => $value) {
-                $config[] = "$key = $value";
-            }
+        $config[] = '[www]';
+        foreach ($poolConfig as $key => $value) {
+            $config[] = "$key = $value";
         }
 
         return \implode("\n", $config);
@@ -245,6 +241,7 @@ SH;
         if (!\is_string($root)) {
             throw new \Exception('Alias @app must be defined.');
         }
+
         $builder->addFile('/build/' . \basename($root), $root);
         $builder->run('cd /build && composer dumpautoload -o');
         /**

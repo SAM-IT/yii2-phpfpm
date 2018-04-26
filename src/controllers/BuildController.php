@@ -77,8 +77,7 @@ class BuildController extends Controller
 
 
         if (isset($this->image)) {
-            $name = "{$this->image}:{$this->tag}";
-            $params['t'] = $name;
+            $params['t'] = "{$this->image}:{$this->tag}";
         }
         $buildStream = $this->createBuildStream($params);
         $this->color = true;
@@ -87,8 +86,8 @@ class BuildController extends Controller
         $this->stdout("Wait finished\n");
         $buildStream->wait();
 
-        if ($this->push && isset($name)) {
-            $this->pushImage($name);
+        if ($this->push) {
+            $this->pushImage();
         }
     }
 
@@ -113,8 +112,13 @@ class BuildController extends Controller
      * @param string $name
      * @throws \Exception
      */
-    private function pushImage(string $name): void
+    private function pushImage(): void
     {
+        if (!isset($this->image)) {
+            throw new \InvalidArgumentException("Image name must be configured when pushing images");
+        }
+        $name = "{$this->image}:{$this->tag}";
+
         $authConfig = new AuthConfig();
         $authConfig->setUsername($this->user);
         $authConfig->setPassword($this->password);
