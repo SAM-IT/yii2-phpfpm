@@ -82,47 +82,60 @@ class BuildController extends Controller
         }
         $buildStream = $this->createBuildStream($params);
         $this->color = true;
-        $buildStream->onFrame(function(BuildInfo $buildInfo): void {
-            $this->stdout($buildInfo->getStream(), Console::FG_CYAN);
-            $this->stdout($buildInfo->getProgress(), Console::FG_YELLOW);
-            $this->stdout($buildInfo->getStatus(), Console::FG_RED);
-            if (!empty($buildInfo->getProgressDetail())) {
-                $this->stdout($buildInfo->getProgressDetail()->getMessage(), Console::FG_YELLOW);
-            }
-            if (!empty($buildInfo->getErrorDetail())) {
-                $this->stdout($buildInfo->getErrorDetail()->getCode() . ':' . $buildInfo->getErrorDetail()->getMessage(), Console::FG_YELLOW);
-            }
-            if (!empty($buildInfo->getError())) {
-                throw new \Exception($buildInfo->getError() . ':' . $buildInfo->getErrorDetail()->getMessage());
-            }
-        });
+        $buildStream->onFrame(\Closure::fromCallable([$this, 'logBuildInfo']));
         $buildStream->wait();
         $this->stdout("Wait finished\n");
         $buildStream->wait();
 
-        if ($this->push) {
-            $authConfig = new AuthConfig();
-            $authConfig->setUsername($this->user);
-            $authConfig->setPassword($this->password);
-            $params = [
-                'X-Registry-Auth' => $authConfig
-            ];
-            /** @var PushStream $pushStream */
-            $pushStream = $this->docker->imagePush($name, [], $params ?? [],  Docker::FETCH_OBJECT);
-
-            if ($pushStream instanceof ResponseInterface) {
-                throw new \Exception($pushStream->getReasonPhrase() . ':' . $pushStream->getBody()->getContents(), $pushStream->getStatusCode());
-            }
-
-            $pushStream->onFrame(function(PushImageInfo $pushImageInfo): void {
-                if (!empty($pushImageInfo->getError())) {
-                    throw new \Exception($pushImageInfo->getError());
-                }
-                $this->stdout($pushImageInfo->getProgress(), Console::FG_YELLOW);
-                $this->stdout($pushImageInfo->getStatus(), Console::FG_RED);
-            });
-            $pushStream->wait();
+        if ($this->push && isset($name)) {
+            $this->pushImage($name);
         }
+    }
+
+    private function logBuildInfo(BuildInfo $buildInfo): void
+    {
+        $this->stdout($buildInfo->getStream(), Console::FG_CYAN);
+        $this->stdout($buildInfo->getProgress(), Console::FG_YELLOW);
+        $this->stdout($buildInfo->getStatus(), Console::FG_RED);
+        if (!empty($buildInfo->getProgressDetail())) {
+            $this->stdout($buildInfo->getProgressDetail()->getMessage(), Console::FG_YELLOW);
+        }
+        if (!empty($buildInfo->getErrorDetail())) {
+            $this->stdout($buildInfo->getErrorDetail()->getCode() . ':' . $buildInfo->getErrorDetail()->getMessage(), Console::FG_YELLOW);
+        }
+        if (!empty($buildInfo->getError())) {
+            throw new \Exception($buildInfo->getError() . ':' . $buildInfo->getErrorDetail()->getMessage());
+        }
+    }
+
+    /**
+     * Push a docker container image
+     * @param string $name
+     * @throws \Exception
+     */
+    private function pushImage(string $name): void
+    {
+        $authConfig = new AuthConfig();
+        $authConfig->setUsername($this->user);
+        $authConfig->setPassword($this->password);
+        $params = [
+            'X-Registry-Auth' => $authConfig
+        ];
+        /** @var PushStream $pushStream */
+        $pushStream = $this->docker->imagePush($name, [], $params ?? [],  Docker::FETCH_OBJECT);
+
+        if ($pushStream instanceof ResponseInterface) {
+            throw new \Exception($pushStream->getReasonPhrase() . ':' . $pushStream->getBody()->getContents(), $pushStream->getStatusCode());
+        }
+
+        $pushStream->onFrame(function(PushImageInfo $pushImageInfo): void {
+            if (!empty($pushImageInfo->getError())) {
+                throw new \Exception($pushImageInfo->getError());
+            }
+            $this->stdout($pushImageInfo->getProgress(), Console::FG_YELLOW);
+            $this->stdout($pushImageInfo->getStatus(), Console::FG_RED);
+        });
+        $pushStream->wait();
     }
 
     public function actionTestClient(): void
