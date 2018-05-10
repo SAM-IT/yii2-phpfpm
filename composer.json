@@ -13,7 +13,6 @@
     ],
     "require": {
         "php": "^7.1",
-        "codeception/codeception": "^2.3",
         "docker-php/docker-php": "^2",
         "docker-php/docker-php-api": "4.1.35"
     },
@@ -30,6 +29,7 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.9",
+        "codeception/codeception": "^2.3",
         "yiisoft/yii2": "^2"
     },
     "scripts": {
