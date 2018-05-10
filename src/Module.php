@@ -266,10 +266,10 @@ SH;
         $builder->entrypoint('["/sbin/tini", "--", "/entrypoint.sh"]');
 
         // Test if we can run a console command.
-        $script = "[ -f /project/{$this->getConsoleEntryScript()} ]";
-        $builder->run($script);
-
-
+        if (stripos($this->getConsoleEntryScript(), 'codecept') == false) {
+            $script = "[ -f /project/{$this->getConsoleEntryScript()} ]";
+            $builder->run($script);
+        }
         return $builder->getContext();
     }
 

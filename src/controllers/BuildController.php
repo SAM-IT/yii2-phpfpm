@@ -102,7 +102,7 @@ class BuildController extends Controller
         if (!empty($buildInfo->getErrorDetail())) {
             $this->stdout($buildInfo->getErrorDetail()->getCode() . ':' . $buildInfo->getErrorDetail()->getMessage(), Console::FG_YELLOW);
         }
-        if (!empty($buildInfo->getError())) {
+        if (!is_null($buildInfo->getError())) {
             throw new \Exception($buildInfo->getError() . ':' . $buildInfo->getErrorDetail()->getMessage());
         }
     }
