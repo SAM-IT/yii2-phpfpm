@@ -50,8 +50,8 @@ class MigrateController extends Controller
     /**
      * Does a migration after acquiring a global lock
      * @param int $limit
-     * @return int
      * @throws \yii\base\InvalidConfigException
+     * @return int
      * @see \yii\console\controllers\MigrateController::migrateUp()
      */
     public function actionUp($limit = 0)
