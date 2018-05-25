@@ -19,7 +19,7 @@ use yii\helpers\Console;
  * @package SamIT\Yii2\PhpFpm\controllers
  * @property Module $module
  */
-class MigrateController extends \yii\console\controllers\MigrateController
+class MigrateController extends Controller
 {
 
     public function stdout($string)
@@ -47,6 +47,13 @@ class MigrateController extends \yii\console\controllers\MigrateController
         return true;
     }
 
+    /**
+     * Does a migration after acquiring a global lock
+     * @param int $limit
+     * @return int
+     * @throws \yii\base\InvalidConfigException
+     * @see \yii\console\controllers\MigrateController::migrateUp()
+     */
     public function actionUp($limit = 0)
     {
         $command = "/project/{$this->module->getConsoleEntryScript()} migrate/up";
