@@ -22,5 +22,5 @@ before_script:
 script:
   - $TEST_COMMAND
 after_success:
-  - wget https://scrutinizer-ci.com/ocular.phar
-  - php ocular.phar code-coverage:upload --format=php-clover tests/_output/coverage.xml
+  - '[[ !-f tests/_output/coverage.xml ]] || wget https://scrutinizer-ci.com/ocular.phar'
+  - '[[ !-f tests/_output/coverage.xml ]] || php ocular.phar code-coverage:upload --format=php-clover tests/_output/coverage.xml'
