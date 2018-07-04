@@ -109,7 +109,6 @@ class BuildController extends Controller
 
     /**
      * Push a docker container image
-     * @param string $name
      * @throws \Exception
      */
     private function pushImage(): void
