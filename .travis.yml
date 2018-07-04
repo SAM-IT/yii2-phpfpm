@@ -12,6 +12,7 @@ matrix:
       env: TEST_COMMAND="composer lint"
 
 install:
+  - travis_retry composer global require hirak/prestissimo
   - travis_retry composer install
 sudo: true
 services:
