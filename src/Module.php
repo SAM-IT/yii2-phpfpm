@@ -130,6 +130,11 @@ class Module extends \yii\base\Module
      * @var string Location of composer.json / composer.lock
      */
     public $composerFilePath = '@app/../';
+
+    /**
+     * @var string[] List of console commands that are executed upon container launch.
+     */
+    public $initializationCommands = [];
     /**
      * @return string A PHP-FPM config file.
      */
@@ -203,7 +208,7 @@ while [ \$ATTEMPTS -lt 10 ]; do
   if [ $? -eq 0 ]; then
     echo "Migrations done";
     break;
-  fi
+  fi 
   echo "Failed to run migrations, retrying in 10s.";
   sleep 10;
   let ATTEMPTS=ATTEMPTS+1
@@ -216,6 +221,9 @@ fi
 SH;
         }
 
+        foreach($this->initializationCommands as $route) {
+            $result[] = "$script $route --interactive=0";
+        }
         $result[] = 'exec php-fpm7 --force-stderr --fpm-config /php-fpm.conf';
         return \implode("\n", $result);
     }
