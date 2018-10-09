@@ -230,8 +230,8 @@ SH;
 
     /**
      * @param string $version This is stored in the VERSION environment variable.
-     * @return Context
      * @throws InvalidConfigException
+     * @return Context
      */
     public function createBuildContext(string $version): Context
     {
