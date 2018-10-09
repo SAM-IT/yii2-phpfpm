@@ -19,7 +19,7 @@ class BuildControllerTest extends \Codeception\Test\Unit
     // tests
     public function testCreateBuildStream(): void
     {
-        $stream = $this->controller->createBuildStream([]);
+        $stream = $this->controller->createBuildStream([], __FUNCTION__);
         $stream->onFrame(function(BuildInfo $frame): void {
             $this->assertNull($frame->getError());
         });

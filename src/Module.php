@@ -228,7 +228,12 @@ SH;
         return \implode("\n", $result);
     }
 
-    public function createBuildContext(): Context
+    /**
+     * @param string $version This is stored in the VERSION environment variable.
+     * @return Context
+     * @throws InvalidConfigException
+     */
+    public function createBuildContext(string $version): Context
     {
         $builder = new ContextBuilder();
 
@@ -274,6 +279,7 @@ SH;
         $builder->add('/php-fpm.conf', $this->createFpmConfig());
         $builder->run("php-fpm7 --force-stderr --fpm-config /php-fpm.conf -t");
         $builder->entrypoint('["/sbin/tini", "--", "/entrypoint.sh"]');
+        $builder->env('VERSION', $version);
 
         // Test if we can run a console command.
         if (\stripos($this->getConsoleEntryScript(), 'codecept') === false) {

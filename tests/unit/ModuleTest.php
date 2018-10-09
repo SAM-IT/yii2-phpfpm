@@ -25,7 +25,7 @@ class ModuleTest extends \Codeception\Test\Unit
     public function testBuild(): void
     {
 
-        $context = $this->module->createBuildContext();
+        $context = $this->module->createBuildContext(__FUNCTION__);
         $directory = $context->getDirectory();
 
         $dockerFile = $context->getDockerfileContent();

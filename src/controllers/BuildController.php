@@ -79,7 +79,7 @@ class BuildController extends Controller
         if (isset($this->image)) {
             $params['t'] = "{$this->image}:{$this->tag}";
         }
-        $buildStream = $this->createBuildStream($params);
+        $buildStream = $this->createBuildStream($params, $this->tag);
         $this->color = true;
         $buildStream->onFrame(\Closure::fromCallable([$this, 'logBuildInfo']));
         $buildStream->wait();
@@ -146,10 +146,10 @@ class BuildController extends Controller
         $this->stdout("It seems the console client works!\n", Console::FG_GREEN);
     }
 
-    public function createBuildStream(array $params = []): BuildStream
+    public function createBuildStream(array $params = [], ?string $version = ''): BuildStream
     {
 
-        $context = $this->module->createBuildContext();
+        $context = $this->module->createBuildContext($version);
         return $this->docker->imageBuild($context->toStream(), $params, [], Docker::FETCH_OBJECT);
     }
 
