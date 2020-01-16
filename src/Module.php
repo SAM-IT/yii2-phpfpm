@@ -258,7 +258,7 @@ SH;
         }
 
         $builder->addFile('/build/' . \basename($root), $root);
-        $builder->run('cd /build && composer dumpautoload -o');
+        $builder->run('cd /build && composer dumpautoload -o --no-dev');
         /**
          * END COMPOSER
          */
