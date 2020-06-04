@@ -14,7 +14,6 @@ use yii\mutex\Mutex;
 /**
  * Class Module
  * @package SamIT\Yii2\PhpFpm
- * @property-write string[] $additionalPackages
  * @property-write string[] $additionalExtensions
  * @property-write string|int[] $additionalPoolConfig
  * @property-write string[] $additionalPhpConfig
@@ -22,20 +21,6 @@ use yii\mutex\Mutex;
  */
 class Module extends \yii\base\Module
 {
-
-    /**
-     * @var bool Whether the container should attempt to run migrations on launch.
-     */
-    public $runMigrations = false;
-
-    /**
-     * @var bool whether migrations should acquire a lock.
-     * It must be configured in the 'mutex' component of this module or the application
-     * Note that this mutex must be shared between all instances of your application.
-     * Consider using something like redis or mysql mutex.
-     */
-    public $migrationsUseMutex = true;
-
     /**
      * The variables will be written to /runtime/env.json as JSON, where your application can read them.
      * @var string[] List of required environment variables. If one is missing the container will exit.
@@ -78,21 +63,6 @@ class Module extends \yii\base\Module
     public $fpmConfig = [
         'error_log' => '/proc/self/fd/2',
         'daemonize' => 'no',
-    ];
-
-    /**
-     * List of OS packages to install
-     */
-    public $packages = [
-        'php7',
-        'php7-fpm',
-        'tini',
-        'ca-certificates',
-        /**
-         * @see https://stedolan.github.io/jq/
-         * This is used for converting the env to JSON.
-         */
-        'jq'
     ];
 
     /**
@@ -180,11 +150,11 @@ class Module extends \yii\base\Module
 
         // Check if runtime directory is writable.
         $result[] = <<<SH
-    su nobody -s /bin/touch /runtime/testfile && rm /runtime/testfile;
-    if [ $? -ne 0 ]; then
-      echo Runtime directory is not writable;
-      exit 1
-    fi
+su nobody -s /bin/touch /runtime/testfile && rm /runtime/testfile;
+if [ $? -ne 0 ]; then
+  echo Runtime directory is not writable;
+  exit 1
+fi
 SH;
 
 
@@ -192,34 +162,20 @@ SH;
         // Check if runtime is a tmpfs.
         $message = Console::ansiFormat('/runtime should really be a tmpfs.', [Console::FG_RED]);
         $result[] = <<<SH
-mount | grep '/runtime type tmpfs';
+grep 'tmpfs /runtime' /proc/mounts;
 if [ $? -ne 0 ]; then
-  echo $message; 
+  echo $message;
 fi
 SH;
-        $result[] = 'jq -n env > /runtime/env.json';
-
-        if ($this->runMigrations) {
-            $result[] = <<<SH
-ATTEMPTS=0
-while [ \$ATTEMPTS -lt 10 ]; do
-  # First run migrations.
-  $script $route --interactive=0
-  if [ $? -eq 0 ]; then
-    echo "Migrations done";
-    break;
-  fi 
-  echo "Failed to run migrations, retrying in 10s.";
-  sleep 10;
-  let ATTEMPTS=ATTEMPTS+1
-done
-
-if [ \$ATTEMPTS -gt 9 ]; then
-  echo "Migrations failed.."
-  exit 1;
+        $result[] = <<<SH
+su nobody -s /bin/touch /runtime/env.json
+jq -n env > /runtime/env.json
+if [ $? -ne 0 ]; then
+  echo "failed to store env in /runtime/env.json";
+  exit 1
 fi
 SH;
-        }
+
 
         foreach($this->initializationCommands as $route) {
             $result[] = "$script $route --interactive=0 || exit";
@@ -233,76 +189,78 @@ SH;
      * @throws InvalidConfigException
      * @return Context
      */
-    public function createBuildContext(string $version): Context
+    public function createBuildContext(string $version): \SamIT\Yii2\PhpFpm\helpers\Context
     {
+        $root = \Yii::getAlias('@app');
+        if (!\is_string($root)) {
+            throw new \Exception('Alias @app must be defined.');
+        }
+
+        $context = new \SamIT\Yii2\PhpFpm\helpers\Context();
         $builder = new ContextBuilder();
 
         /**
          * BEGIN COMPOSER
          */
         $builder->from('composer');
+        $context->command('FROM composer');
         $builder->addFile('/build/composer.json', \Yii::getAlias($this->composerFilePath) .'/composer.json');
+        $context->addFile('/build/composer.json', \Yii::getAlias($this->composerFilePath) .'/composer.json');
+
         if (\file_exists(\Yii::getAlias($this->composerFilePath) . '/composer.lock')) {
             $builder->addFile('/build/composer.lock', \Yii::getAlias($this->composerFilePath) . '/composer.lock');
+            $context->addFile('/build/composer.lock', \Yii::getAlias($this->composerFilePath) .'/composer.json');
         }
 
         $builder->run('composer global require hirak/prestissimo');
+        $context->run('composer global require hirak/prestissimo');
 
         $builder->run('cd /build && composer install --no-dev --no-autoloader --ignore-platform-reqs --prefer-dist && rm -rf /root/.composer');
-
+        $context->run('cd /build && composer install --no-dev --no-autoloader --ignore-platform-reqs --prefer-dist');
 
         // Add the actual source code.
-        $root = \Yii::getAlias('@app');
-        if (!\is_string($root)) {
-            throw new \Exception('Alias @app must be defined.');
-        }
-
         $builder->addFile('/build/' . \basename($root), $root);
+        $context->addFile('/build/' . \basename($root), $root);
         $builder->run('cd /build && composer dumpautoload -o --no-dev');
+        $context->run('cd /build && composer dumpautoload -o --no-dev');
         /**
          * END COMPOSER
          */
 
-
         $builder->from('alpine:edge');
-        $packages = $this->packages;
-
-        foreach ($this->extensions as $extension) {
-            $packages[] = "php7-$extension";
-        }
-        $builder->run('apk add --update --no-cache ' . \implode(' ', $packages));
-        $builder->run('mkdir /runtime && chown nobody:nobody /runtime');
-        $builder->volume('/runtime');
+        $context->from('php:7.4-fpm-alpine');
+        $context->addUrl("/usr/local/bin/", "https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions");
+        $context->run("chmod +x /usr/local/bin/install-php-extensions");
+        $context->run('install-php-extensions ' . implode(' ', $this->extensions));
+        $context->run('mkdir /runtime && chown nobody:nobody /runtime');
+        $context->volume('/runtime');
+        $context->copyFromLayer("/project", "0", "/build");
         $builder->copy('--from=0 /build', '/project');
-        $builder->add('/entrypoint.sh', $this->createEntrypoint());
-        $builder->run('chmod +x /entrypoint.sh');
-        $builder->add('/php-fpm.conf', $this->createFpmConfig());
-        $builder->run("php-fpm7 --force-stderr --fpm-config /php-fpm.conf -t");
-        $builder->entrypoint('["/sbin/tini", "--", "/entrypoint.sh"]');
-        $builder->env('VERSION', $version);
 
+        $context->add('/entrypoint.sh', $this->createEntrypoint());
+        $builder->add('/entrypoint.sh', $this->createEntrypoint());
+
+        $builder->run('chmod +x /entrypoint.sh');
+        $context->run('chmod +x /entrypoint.sh');
+
+        $builder->add('/php-fpm.conf', $this->createFpmConfig());
+        $context->add('/php-fpm.conf', $this->createFpmConfig());
+
+        $builder->run("php-fpm --force-stderr --fpm-config /php-fpm.conf -t");
+        $context->run("php-fpm --force-stderr --fpm-config /php-fpm.conf -t");
+
+        $builder->entrypoint('["/sbin/tini", "--", "/entrypoint.sh"]');
+        $context->entrypoint(["/entrypoint.sh"]);
+
+        $builder->env('VERSION', $version);
+        $context->env('VERSION', $version);
         // Test if we can run a console command.
         if (\stripos($this->getConsoleEntryScript(), 'codecept') === false) {
             $script = "[ -f /project/{$this->getConsoleEntryScript()} ]";
             $builder->run($script);
+            $context->run($script);
         }
-        return $builder->getContext();
-    }
-
-    public function getLock(int $timeout = 0)
-    {
-        if ($this->has('mutex')) {
-            $mutex = $this->get('mutex');
-            if ($mutex instanceof Mutex
-                && $mutex->acquire(__CLASS__, $timeout)
-            ) {
-                \register_shutdown_function(function() use ($mutex): void {
-                    $mutex->release(__CLASS__);
-                });
-                return true;
-            }
-        }
-        return false;
+        return $context;
     }
 
     /**

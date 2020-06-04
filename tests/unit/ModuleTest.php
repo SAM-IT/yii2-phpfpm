@@ -28,7 +28,7 @@ class ModuleTest extends \Codeception\Test\Unit
         $context = $this->module->createBuildContext(__FUNCTION__);
         $directory = $context->getDirectory();
 
-        $dockerFile = $context->getDockerfileContent();
+        $dockerFile = file_get_contents("$directory/Dockerfile");
 
         $fileName = \preg_replace('#.*ADD (.+?) /php-fpm\.conf.*#s', '$2', $dockerFile);
         $this->assertFileExists($directory . '/' . $fileName);
@@ -38,65 +38,8 @@ class ModuleTest extends \Codeception\Test\Unit
 
     }
 
-    public function testNoMutex(): void
-    {
-        $this->assertFalse($this->module->getLock(1));
-    }
-
-    public function testMutex(): void
-    {
-        $this->module->setComponents([
-            'mutex' => [
-                'class' => \yii\mutex\FileMutex::class
-            ]
-        ]);
-        $this->assertTrue($this->module->getLock(1));
-        // Test you can't get 2.
-        $start = \microtime(true);
-
-        $this->assertFalse($this->module->getLock(2));
-
-        $this->assertGreaterThan($start + 1, \microtime(true));
-
-    }
-
-
-    public function testStreamDecode(): void
-    {
-
-        $stream = new \GuzzleHttp\Psr7\BufferStream();
-        $serializer = new Serializer(NormalizerFactory::create(), [
-            new JsonEncoder(new JsonEncode(), new JsonDecode())
-        ]);
-        $buildStream = new \Docker\Stream\BuildStream($stream, $serializer);
-
-        $counter = 0;
-        /** @var BuildInfo[] $frames */
-        $frames = [];
-        $buildStream->onFrame(function(BuildInfo $info) use (&$counter, &$frames): void {
-            $counter++;
-            $frames[] = $info;
-        });
-        $stream->write(\file_get_contents(__DIR__ . '/../data/simple.txt'));
-        $buildStream->wait();
-        $this->assertSame(1, $counter);
-
-
-
-        /** @var BuildInfo $frame */
-        $frame = \array_pop($frames);
-//        var_dump(bin2hex($frame->getStream()));
-//        var_dump(array_slice($frames, -1)[0]);
-//        die();
-    }
-
-
     public function testAdditionalSetters(): void
     {
-        $this->module->packages = ['def'];
-        $this->module->additionalPackages = ['abc'];
-        $this->assertSame(['def', 'abc'], $this->module->packages);
-
         $this->module->extensions = ['def'];
         $this->module->additionalExtensions = ['abc'];
 
