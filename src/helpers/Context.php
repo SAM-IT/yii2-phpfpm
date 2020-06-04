@@ -29,7 +29,7 @@ class Context
 
     public function __destruct()
     {
-//        passthru("rm -r {$this->directory}");
+        $this->filesystem->remove($this->directory);
     }
 
     public function command(string $command): void
