@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 namespace SamIT\Yii2\PhpFpm;
 
+use SamIT\Docker\Context;
 use yii\base\InvalidConfigException;
 use yii\base\UnknownPropertyException;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Console;
-use yii\mutex\Mutex;
 
 /**
  * Class Module
@@ -187,14 +187,14 @@ SH;
      * @throws InvalidConfigException
      * @return Context
      */
-    public function createBuildContext(string $version): \SamIT\Yii2\PhpFpm\helpers\Context
+    public function createBuildContext(string $version): Context
     {
         $root = \Yii::getAlias('@app');
         if (!\is_string($root)) {
             throw new \Exception('Alias @app must be defined.');
         }
 
-        $context = new \SamIT\Yii2\PhpFpm\helpers\Context();
+        $context = new Context();
 
         /**
          * BEGIN COMPOSER

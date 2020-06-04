@@ -3,13 +3,6 @@ declare(strict_types=1);
 
 namespace tests;
 
-use Docker\API\Model\BuildInfo;
-use Docker\API\Normalizer\NormalizerFactory;
-use Symfony\Component\Serializer\Encoder\JsonDecode;
-use Symfony\Component\Serializer\Encoder\JsonEncode;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Serializer;
-
 class ModuleTest extends \Codeception\Test\Unit
 {
     /**

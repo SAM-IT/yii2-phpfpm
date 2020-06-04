@@ -4,3 +4,4 @@ composer.lock
 .php_cs.cache
 .idea/
 /tests/_support
+/node_modules

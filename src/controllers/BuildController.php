@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace SamIT\Yii2\PhpFpm\controllers;
 
-use SamIT\Yii2\PhpFpm\helpers\Docker;
+use SamIT\Docker\Docker;
 use SamIT\Yii2\PhpFpm\Module;
 use yii\base\InvalidConfigException;
 use yii\console\Controller;
