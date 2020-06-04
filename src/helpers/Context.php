@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace SamIT\Yii2\PhpFpm\helpers;
 
-
 use Symfony\Component\Filesystem\Filesystem;
 
 class Context

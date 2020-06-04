@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+namespace tests;
+
 use Codeception\Test\Unit;
 
 class ModuleBootstrapTest extends Unit

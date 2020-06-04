@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace SamIT\Yii2\PhpFpm;
 
-use Docker\Context\Context;
-use Docker\Context\ContextBuilder;
 use yii\base\InvalidConfigException;
 use yii\base\UnknownPropertyException;
 use yii\helpers\ArrayHelper;
@@ -119,7 +117,7 @@ class Module extends \yii\base\Module
 
         // Add pool directives.
         $poolConfig = $this->poolConfig;
-        foreach($this->phpConfig as $key => $value) {
+        foreach ($this->phpConfig as $key => $value) {
             $poolConfig["php_admin_value[$key]"] = $value;
         }
 
@@ -142,7 +140,7 @@ class Module extends \yii\base\Module
         $result = [];
         $result[] = '#!/bin/sh';
         // Check for variables.
-        foreach($this->environmentVariables as $name) {
+        foreach ($this->environmentVariables as $name) {
             $result[] = \strtr('if [ -z "${name}" ]; then echo "Variable \${name} is required."; exit 1; fi', [
                 '{name}' => $name
             ]);
@@ -177,7 +175,7 @@ fi
 SH;
 
 
-        foreach($this->initializationCommands as $route) {
+        foreach ($this->initializationCommands as $route) {
             $result[] = "$script $route --interactive=0 || exit";
         }
         $result[] = 'exec php-fpm7 --force-stderr --fpm-config /php-fpm.conf';
@@ -197,37 +195,28 @@ SH;
         }
 
         $context = new \SamIT\Yii2\PhpFpm\helpers\Context();
-        $builder = new ContextBuilder();
 
         /**
          * BEGIN COMPOSER
          */
-        $builder->from('composer');
         $context->command('FROM composer');
-        $builder->addFile('/build/composer.json', \Yii::getAlias($this->composerFilePath) .'/composer.json');
         $context->addFile('/build/composer.json', \Yii::getAlias($this->composerFilePath) .'/composer.json');
 
         if (\file_exists(\Yii::getAlias($this->composerFilePath) . '/composer.lock')) {
-            $builder->addFile('/build/composer.lock', \Yii::getAlias($this->composerFilePath) . '/composer.lock');
-            $context->addFile('/build/composer.lock', \Yii::getAlias($this->composerFilePath) .'/composer.json');
+            $context->addFile('/build/composer.lock', \Yii::getAlias($this->composerFilePath) . '/composer.lock');
         }
 
-        $builder->run('composer global require hirak/prestissimo');
         $context->run('composer global require hirak/prestissimo');
 
-        $builder->run('cd /build && composer install --no-dev --no-autoloader --ignore-platform-reqs --prefer-dist && rm -rf /root/.composer');
         $context->run('cd /build && composer install --no-dev --no-autoloader --ignore-platform-reqs --prefer-dist');
 
         // Add the actual source code.
-        $builder->addFile('/build/' . \basename($root), $root);
         $context->addFile('/build/' . \basename($root), $root);
-        $builder->run('cd /build && composer dumpautoload -o --no-dev');
         $context->run('cd /build && composer dumpautoload -o --no-dev');
         /**
          * END COMPOSER
          */
 
-        $builder->from('alpine:edge');
         $context->from('php:7.4-fpm-alpine');
         $context->addUrl("/usr/local/bin/", "https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions");
         $context->run("chmod +x /usr/local/bin/install-php-extensions");
@@ -235,29 +224,21 @@ SH;
         $context->run('mkdir /runtime && chown nobody:nobody /runtime');
         $context->volume('/runtime');
         $context->copyFromLayer("/project", "0", "/build");
-        $builder->copy('--from=0 /build', '/project');
 
         $context->add('/entrypoint.sh', $this->createEntrypoint());
-        $builder->add('/entrypoint.sh', $this->createEntrypoint());
 
-        $builder->run('chmod +x /entrypoint.sh');
         $context->run('chmod +x /entrypoint.sh');
 
-        $builder->add('/php-fpm.conf', $this->createFpmConfig());
         $context->add('/php-fpm.conf', $this->createFpmConfig());
 
-        $builder->run("php-fpm --force-stderr --fpm-config /php-fpm.conf -t");
         $context->run("php-fpm --force-stderr --fpm-config /php-fpm.conf -t");
 
-        $builder->entrypoint('["/sbin/tini", "--", "/entrypoint.sh"]');
         $context->entrypoint(["/entrypoint.sh"]);
 
-        $builder->env('VERSION', $version);
         $context->env('VERSION', $version);
         // Test if we can run a console command.
         if (\stripos($this->getConsoleEntryScript(), 'codecept') === false) {
             $script = "[ -f /project/{$this->getConsoleEntryScript()} ]";
-            $builder->run($script);
             $context->run($script);
         }
         return $context;
@@ -271,7 +252,7 @@ SH;
     {
         $full = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), -1)[0]['file'];
         $relative = \strtr($full, [\dirname(\Yii::getAlias('@app')) => '']);
-        if ($relative === $full){
+        if ($relative === $full) {
             throw new InvalidConfigException("The console entry script must be located inside the @app directory.");
         }
         return \ltrim($relative, '/');

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+namespace tests;
+
 use Docker\API\Model\BuildInfo;
 use Docker\API\Normalizer\NormalizerFactory;
 use Symfony\Component\Serializer\Encoder\JsonDecode;
@@ -35,7 +37,6 @@ class ModuleTest extends \Codeception\Test\Unit
 
         $fileName = \preg_replace('#.*ADD (.+?) /entrypoint\.sh.*#s', '$2', $dockerFile);
         $this->assertFileExists($directory . '/' . $fileName);
-
     }
 
     public function testAdditionalSetters(): void
@@ -52,5 +53,4 @@ class ModuleTest extends \Codeception\Test\Unit
         $this->module->additionalPoolConfig = ['e' => 'f'];
         $this->assertSame(['a' => 'b', 'c' => 'd', 'e' => 'f'], $this->module->poolConfig);
     }
-
 }

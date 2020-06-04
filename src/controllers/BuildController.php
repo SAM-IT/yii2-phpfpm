@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace SamIT\Yii2\PhpFpm\controllers;
 
-
 use SamIT\Yii2\PhpFpm\helpers\Docker;
 use SamIT\Yii2\PhpFpm\Module;
 use yii\base\InvalidConfigException;
@@ -83,7 +82,6 @@ class BuildController extends Controller
                 $result[] = 'image';
                 $result[] = 'tag';
                 break;
-
         }
         return $result;
     }
@@ -108,6 +106,4 @@ class BuildController extends Controller
         echo $string;
         return \strlen($string);
     }
-
-
 }

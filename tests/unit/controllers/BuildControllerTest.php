@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use Docker\API\Model\BuildInfo;
+namespace tests\controllers;
 
 class BuildControllerTest extends \Codeception\Test\Unit
 {
