@@ -135,7 +135,6 @@ class Module extends \yii\base\Module
     protected function createEntrypoint(): string
     {
         // Get the route.
-        $route = "{$this->getUniqueId()}/migrate/up";
         $script = "/project/{$this->getConsoleEntryScript()}";
         $result = [];
         $result[] = '#!/bin/sh';
