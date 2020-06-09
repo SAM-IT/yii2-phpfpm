@@ -177,7 +177,7 @@ SH;
         foreach ($this->initializationCommands as $route) {
             $result[] = "$script $route --interactive=0 || exit";
         }
-        $result[] = 'exec php-fpm7 --force-stderr --fpm-config /php-fpm.conf';
+        $result[] = 'exec php-fpm --force-stderr --fpm-config /php-fpm.conf';
         return \implode("\n", $result);
     }
 
