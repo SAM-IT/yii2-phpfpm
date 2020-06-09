@@ -217,6 +217,7 @@ SH;
          */
 
         $context->from('php:7.4-fpm-alpine');
+        $context->run('apk add --update --no-cache jq');
         $context->addUrl("/usr/local/bin/", "https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions");
         $context->run("chmod +x /usr/local/bin/install-php-extensions");
         $context->run('install-php-extensions ' . implode(' ', $this->extensions));
