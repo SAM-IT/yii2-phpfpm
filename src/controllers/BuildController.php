@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace SamIT\Yii2\PhpFpm\controllers;
 
+use SamIT\Docker\Context;
 use SamIT\Docker\Docker;
 use SamIT\Yii2\PhpFpm\Module;
 use yii\base\InvalidConfigException;
@@ -56,7 +57,8 @@ class BuildController extends Controller
             $params['t'] = "{$this->image}:{$this->tag}";
         }
 
-        $context = $this->module->createBuildContext($this->tag);
+        $context = new Context();
+        $this->module->createBuildContext($context, $this->tag, dirname(\Yii::getAlias('@app')));
 
         $docker = new Docker();
         $docker->build($context, "{$this->image}:{$this->tag}");

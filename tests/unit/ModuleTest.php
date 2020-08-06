@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 namespace tests;
 
+use PHPUnit\Framework\MockObject\Stub\Stub;
+use SamIT\Docker\Context;
+use yii\base\UnknownPropertyException;
+
 class ModuleTest extends \Codeception\Test\Unit
 {
     /**
@@ -17,10 +21,78 @@ class ModuleTest extends \Codeception\Test\Unit
     }
 
     // tests
+    public function testBuildInvalidSourceDir(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->module->createBuildContext(new Context(), __FUNCTION__, '/test/does/not/exist');
+    }
+
+    public function testBuildEntryscriptOutsideSourceDir(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->module->createBuildContext(new Context(), __FUNCTION__, '/tmp');
+    }
+
+    public function testBuildInitializationCommands(): void
+    {
+        $this->module->initializationCommands[] = $test = md5('cool stuff');
+        $stub = $this->createMock(Context::class);
+        $files = [];
+        $stub->method('add')->will($this->returnCallback(function (string $file, string $source) use (&$files) {
+            $files[$file] = $source;
+        }));
+
+        $stub->method('entrypoint')->will($this->returnCallback(function (array $entrypoint) use (&$entryFile) {
+            $entryFile = $entrypoint[0];
+        }));
+
+        $this->module->createBuildContext($stub, __FUNCTION__, dirname(\Yii::getAlias('@app')));
+        $this->assertArrayHasKey($entryFile, $files);
+        $this->assertStringContainsString($test, $files[$entryFile]);
+    }
+    public function testBuildMandatoryVariablesInEntrypoint(): void
+    {
+        $this->module->environmentVariables[] = $test = md5('abc');
+        $stub = $this->createMock(Context::class);
+        $files = [];
+        $stub->method('add')->will($this->returnCallback(function (string $file, string $source) use (&$files) {
+            $files[$file] = $source;
+        }));
+
+        $stub->method('entrypoint')->will($this->returnCallback(function (array $entrypoint) use (&$entryFile) {
+            $entryFile = $entrypoint[0];
+        }));
+
+        $this->module->createBuildContext($stub, __FUNCTION__, dirname(\Yii::getAlias('@app')));
+        $this->assertArrayHasKey($entryFile, $files);
+        $this->assertStringContainsString($test, $files[$entryFile]);
+    }
+
+    public function testSpecialSetters(): void
+    {
+        $this->module->extensions = ['test'];
+        $this->module->additionalExtensions = ['abc'];
+        $this->assertSame(['test', 'abc'], $this->module->extensions);
+
+        $this->module->poolConfig = ['d' => 'b'];
+        $this->module->additionalPoolConfig = ['b' => 'c'];
+        $this->assertSame(['d' => 'b', 'b' => 'c'], $this->module->poolConfig);
+
+        // Test the standard yii setter
+        $this->module->basePath = '/tmp';
+        $this->assertSame('/tmp', $this->module->getBasePath());
+    }
+
+    public function testInvalidSpecialSetter(): void
+    {
+        $this->expectException(UnknownPropertyException::class);
+        $this->module->additionalInvalid = ['abc'];
+    }
+
     public function testBuild(): void
     {
 
-        $context = $this->module->createBuildContext(__FUNCTION__);
+        $this->module->createBuildContext($context = new Context(), __FUNCTION__, dirname(\Yii::getAlias('@app')));
         $directory = $context->getDirectory();
 
         $dockerFile = file_get_contents("$directory/Dockerfile");

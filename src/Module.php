@@ -132,15 +132,14 @@ class Module extends \yii\base\Module
     /**
      * @return string A shell script that checks for existence of (non-empty) variables and runs php-fpm.
      */
-    protected function createEntrypoint(): string
+    private function createEntrypoint(string $entryScript): string
     {
         // Get the route.
-        $script = "/project/{$this->getConsoleEntryScript()}";
         $result = [];
         $result[] = '#!/bin/sh';
         // Check for variables.
         foreach ($this->environmentVariables as $name) {
-            $result[] = \strtr('if [ -z "${name}" ]; then echo "Variable \${name} is required."; exit 1; fi', [
+            $result[] = \strtr('if [ -z "${name}" && ! -f "$SECRET_DIR/{name}" ]; then echo "Variable \${name} is required."; exit 1; fi', [
                 '{name}' => $name
             ]);
         }
@@ -166,7 +165,7 @@ fi
 SH;
         $result[] = <<<SH
 su nobody -s /bin/touch /runtime/env.json
-(test -d \$SECRET_DIR && cd \$SECRET_DIR && find * -type f exec jq -sR '{(input_filename):.}' {} \; ) | jq -s 'env+add' > /runtime/env.json
+(test -d \$SECRET_DIR && cd \$SECRET_DIR && find * -type f -exec jq -sR '{(input_filename):.}' {} \; ) | jq -s 'env+add' > /runtime/env.json
 if [ $? -ne 0 ]; then
   echo "failed to store env in /runtime/env.json";
   exit 1
@@ -175,25 +174,28 @@ SH;
 
 
         foreach ($this->initializationCommands as $route) {
-            $result[] = "$script $route --interactive=0 || exit";
+            $result[] = "$entryScript $route --interactive=0 || exit";
         }
         $result[] = 'exec php-fpm --force-stderr --fpm-config /php-fpm.conf';
         return \implode("\n", $result);
     }
 
     /**
+     * @param Context $context The context to use
      * @param string $version This is stored in the VERSION environment variable.
+     * @param string $sourcePath This is the path where app source is stored
      * @throws InvalidConfigException
-     * @return Context
      */
-    public function createBuildContext(string $version): Context
-    {
-        $root = \Yii::getAlias('@app');
-        if (!\is_string($root)) {
-            throw new \Exception('Alias @app must be defined.');
+    public function createBuildContext(
+        Context $context,
+        string $version,
+        string $sourcePath
+    ): void {
+        if (!is_dir($sourcePath)) {
+            throw new \InvalidArgumentException("$sourcePath does not exist or is not a directory");
         }
 
-        $context = new Context();
+        $entryScript = "/project/{$this->getConsoleEntryScript($sourcePath)}";
 
         /**
          * BEGIN COMPOSER
@@ -210,7 +212,7 @@ SH;
         $context->run('cd /build && composer install --no-dev --no-autoloader --ignore-platform-reqs --prefer-dist');
 
         // Add the actual source code.
-        $context->addFile('/build/' . \basename($root), $root);
+        $context->addFile('/build/' . \basename($sourcePath), $sourcePath);
         $context->run('cd /build && composer dumpautoload -o --no-dev');
         /**
          * END COMPOSER
@@ -225,7 +227,7 @@ SH;
         $context->volume('/runtime');
         $context->copyFromLayer("/project", "0", "/build");
 
-        $context->add('/entrypoint.sh', $this->createEntrypoint());
+        $context->add('/entrypoint.sh', $this->createEntrypoint($entryScript));
 
         $context->run('chmod +x /entrypoint.sh');
 
@@ -237,35 +239,33 @@ SH;
 
         $context->env('VERSION', $version);
         // Test if we can run a console command.
-        if (\stripos($this->getConsoleEntryScript(), 'codecept') === false) {
-            $script = "[ -f /project/{$this->getConsoleEntryScript()} ]";
-            $context->run($script);
-        }
-        return $context;
+        $context->run("[ -f $entryScript ]");
     }
 
     /**
-     * @throws InvalidConfigException in case the app is not configured as expected
+     * @throws \InvalidArgumentException in case the app is not configured as expected
+     * @param string $sourcePath the path to the soruce files
      * @return string the relative path of the (console) entry script with respect to the project (not app) root.
      */
-    public function getConsoleEntryScript(): string
+    private function getConsoleEntryScript(string $sourcePath): string
     {
         $full = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), -1)[0]['file'];
-        $relative = \strtr($full, [\dirname(\Yii::getAlias('@app')) => '']);
-        if ($relative === $full) {
-            throw new InvalidConfigException("The console entry script must be located inside the @app directory.");
+        if (strncmp($sourcePath, $full, strlen($sourcePath)) !== 0) {
+            throw new \InvalidArgumentException("The console entry script must be located inside the @app directory.");
         }
-        return \ltrim($relative, '/');
+        return \ltrim(substr($full, strlen($sourcePath)), '/');
     }
 
 
     public function __set($name, $value): void
     {
-        if (\strncmp($name, 'additional', 10) === 0) {
-            $this->add(\lcfirst(\substr($name, 10)), $value);
-        } else {
+        if (\strncmp($name, 'additional', 10) !== 0) {
             parent::__set($name, $value);
+            return;
         }
+
+
+        $this->add(\lcfirst(\substr($name, 10)), $value);
     }
 
     private function add($name, array $value): void
