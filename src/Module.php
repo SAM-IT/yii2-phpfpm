@@ -139,7 +139,7 @@ class Module extends \yii\base\Module
         $result[] = '#!/bin/sh';
         // Check for variables.
         foreach ($this->environmentVariables as $name) {
-            $result[] = \strtr('if [ -z "${name}" && ! -f "$SECRET_DIR/{name}" ]; then echo "Variable \${name} is required."; exit 1; fi', [
+            $result[] = \strtr('if [ -z "${name}" -a ! -f "$SECRET_DIR/{name}" ]; then echo "Variable \${name} is required."; exit 1; fi', [
                 '{name}' => $name
             ]);
         }
