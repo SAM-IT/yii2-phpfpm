@@ -27,6 +27,7 @@
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.5",
         "codeception/codeception": "> 4",
+        "phpunit/phpunit": "< 9.2",
         "yiisoft/yii2": "> 2",
         "brainmaestro/composer-git-hooks": "^2.8",
         "codeception/module-yii2": "^1.1"
@@ -40,7 +41,7 @@
                 "composer test"
             ],
             "commit-msg": [
-                "npx commitlint -e"
+                "npx commitlint -e $1"
             ]
         }
     },

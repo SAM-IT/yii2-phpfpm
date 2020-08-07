@@ -30,7 +30,7 @@ class ModuleTest extends \Codeception\Test\Unit
     public function testBuildEntryscriptOutsideSourceDir(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->module->createBuildContext(new Context(), __FUNCTION__, '/tmp');
+        $this->module->createBuildContext(new Context(), __FUNCTION__, __DIR__);
     }
 
     public function testBuildInitializationCommands(): void

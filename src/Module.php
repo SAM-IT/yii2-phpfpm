@@ -250,10 +250,11 @@ SH;
     private function getConsoleEntryScript(string $sourcePath): string
     {
         $full = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), -1)[0]['file'];
-        if (strncmp($sourcePath, $full, strlen($sourcePath)) !== 0) {
-            throw new \InvalidArgumentException("The console entry script must be located inside the @app directory.");
+        $projectRoot = dirname($sourcePath);
+        if (strncmp($projectRoot, $full, strlen($projectRoot)) !== 0) {
+            throw new \InvalidArgumentException("The console entry script must be located inside the project root; $full is not in $projectRoot");
         }
-        return \ltrim(substr($full, strlen($sourcePath)), '/');
+        return \ltrim(substr($full, strlen($projectRoot)), '/');
     }
 
 
