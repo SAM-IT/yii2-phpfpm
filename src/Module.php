@@ -183,7 +183,7 @@ SH;
     /**
      * @param Context $context The context to use
      * @param string $version This is stored in the VERSION environment variable.
-     * @param string $sourcePath This is the path where app source is stored
+     * @param string $sourcePath This is the path where app source is stored, it must be a top level dir, the project root is derived from it
      * @throws InvalidConfigException
      */
     public function createBuildContext(

@@ -58,7 +58,7 @@ class BuildController extends Controller
         }
 
         $context = new Context();
-        $this->module->createBuildContext($context, $this->tag, dirname(\Yii::getAlias('@app')));
+        $this->module->createBuildContext($context, $this->tag, \Yii::getAlias('@app'));
 
         $docker = new Docker();
         $docker->build($context, "{$this->image}:{$this->tag}");
