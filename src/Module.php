@@ -207,8 +207,6 @@ SH;
             $context->addFile('/build/composer.lock', \Yii::getAlias($this->composerFilePath) . '/composer.lock');
         }
 
-        $context->run('composer global require hirak/prestissimo');
-
         $context->run('cd /build && composer install --no-dev --no-autoloader --ignore-platform-reqs --prefer-dist');
 
         // Add the actual source code.
