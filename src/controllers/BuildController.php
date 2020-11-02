@@ -6,6 +6,7 @@ namespace SamIT\Yii2\PhpFpm\controllers;
 use SamIT\Docker\Context;
 use SamIT\Docker\Docker;
 use SamIT\Yii2\PhpFpm\Module;
+use Symfony\Component\Filesystem\Filesystem;
 use yii\base\InvalidConfigException;
 use yii\console\Controller;
 use yii\helpers\Console;
@@ -43,6 +44,22 @@ class BuildController extends Controller
         $this->push = $this->module->push;
         $this->image = $this->module->image;
         $this->tag = $this->module->tag;
+    }
+
+    /**
+     * @param string $targetPath The path where the docker build context should be stored
+     */
+    public function actionCreateContext(string $targetPath): void
+    {
+        $filesystem = new Filesystem();
+        if (!is_dir($targetPath)) {
+            $filesystem->mkdir($targetPath);
+        }
+
+        $context = new Context();
+        $this->module->createBuildContext($context, $this->tag, \Yii::getAlias('@app'));
+
+        $filesystem->mirror($context->getDirectory(), $targetPath);
     }
 
     public function actionBuild(): void
