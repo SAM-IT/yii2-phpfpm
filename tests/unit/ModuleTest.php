@@ -91,7 +91,6 @@ class ModuleTest extends \Codeception\Test\Unit
 
     public function testBuild(): void
     {
-
         $this->module->createBuildContext($context = new Context(), __FUNCTION__, dirname(\Yii::getAlias('@app')));
         $directory = $context->getDirectory();
 
@@ -104,6 +103,23 @@ class ModuleTest extends \Codeception\Test\Unit
         $this->assertFileExists($directory . '/' . $fileName);
     }
 
+    public function testBuildUsesConfiguredBaseImage(): void
+    {
+        $this->module->baseImage = 'test1234:5678';
+        $this->module->createBuildContext($context = new Context(), __FUNCTION__, dirname(\Yii::getAlias('@app')));
+        $directory = $context->getDirectory();
+
+        $lines = file("$directory/Dockerfile", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
+        // Find last line that starts with FROM.
+        $lastFrom = null;
+        foreach ($lines as $line) {
+            if (preg_match('/^FROM/', $line)) {
+                $lastFrom = $line;
+            }
+        }
+        $this->assertNotNull($lastFrom);
+        $this->assertMatchesRegularExpression("/^FROM\s*{$this->module->baseImage}/", $lastFrom);
+    }
     public function testAdditionalSetters(): void
     {
         $this->module->extensions = ['def'];

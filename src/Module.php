@@ -85,6 +85,10 @@ class Module extends \yii\base\Module
     public $image;
 
     /**
+     * @var string The name of the base image to use for the container. Should contain php-fpm
+     */
+    public string $baseImage = 'php:7.4-fpm-alpine';
+    /**
      * @var string The tag of the created image.
      */
     public $tag = 'latest';
@@ -216,7 +220,7 @@ SH;
          * END COMPOSER
          */
 
-        $context->from('php:7.4-fpm-alpine');
+        $context->from($this->baseImage);
         $context->run('apk add --update --no-cache jq');
         $context->addUrl("/usr/local/bin/", "https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions");
         $context->run("chmod +x /usr/local/bin/install-php-extensions");
