@@ -10,7 +10,7 @@
         }
     ],
     "require": {
-        "php": "^7.4",
+        "php": "^7.4 | > 8",
         "sam-it/docker-php": ">= 1.0.5"
     },
     "repositories": [
@@ -27,7 +27,6 @@
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.5",
         "codeception/codeception": "> 4",
-        "phpunit/phpunit": "< 9.2",
         "yiisoft/yii2": "> 2",
         "brainmaestro/composer-git-hooks": "^2.8",
         "codeception/module-yii2": "^1.1"
