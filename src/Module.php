@@ -222,7 +222,7 @@ SH;
 
         $context->from($this->baseImage);
         $context->run('apk add --update --no-cache jq');
-        $context->addUrl("/usr/local/bin/", "https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions");
+        $context->addUrl("/usr/local/bin/", "https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions");
         $context->run("chmod +x /usr/local/bin/install-php-extensions");
         $context->run('install-php-extensions ' . implode(' ', $this->extensions));
         $context->run('mkdir /runtime && chown nobody:nobody /runtime');
