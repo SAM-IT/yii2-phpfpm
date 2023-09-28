@@ -1,13 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace tests;
 
-use PHPUnit\Framework\MockObject\Stub\Stub;
 use SamIT\Docker\Context;
 use yii\base\UnknownPropertyException;
 
-class ModuleTest extends \Codeception\Test\Unit
+final class ModuleTest extends \Codeception\Test\Unit
 {
     /**
      * @var \SamIT\Yii2\PhpFpm\Module
@@ -33,47 +33,8 @@ class ModuleTest extends \Codeception\Test\Unit
         $this->module->createBuildContext(new Context(), __FUNCTION__, __DIR__);
     }
 
-    public function testBuildInitializationCommands(): void
-    {
-        $this->module->initializationCommands[] = $test = md5('cool stuff');
-        $stub = $this->createMock(Context::class);
-        $files = [];
-        $stub->method('add')->will($this->returnCallback(function (string $file, string $source) use (&$files) {
-            $files[$file] = $source;
-        }));
-
-        $stub->method('entrypoint')->will($this->returnCallback(function (array $entrypoint) use (&$entryFile) {
-            $entryFile = $entrypoint[0];
-        }));
-
-        $this->module->createBuildContext($stub, __FUNCTION__, dirname(\Yii::getAlias('@app')));
-        $this->assertArrayHasKey($entryFile, $files);
-        $this->assertStringContainsString($test, $files[$entryFile]);
-    }
-    public function testBuildMandatoryVariablesInEntrypoint(): void
-    {
-        $this->module->environmentVariables[] = $test = md5('abc');
-        $stub = $this->createMock(Context::class);
-        $files = [];
-        $stub->method('add')->will($this->returnCallback(function (string $file, string $source) use (&$files) {
-            $files[$file] = $source;
-        }));
-
-        $stub->method('entrypoint')->will($this->returnCallback(function (array $entrypoint) use (&$entryFile) {
-            $entryFile = $entrypoint[0];
-        }));
-
-        $this->module->createBuildContext($stub, __FUNCTION__, dirname(\Yii::getAlias('@app')));
-        $this->assertArrayHasKey($entryFile, $files);
-        $this->assertStringContainsString($test, $files[$entryFile]);
-    }
-
     public function testSpecialSetters(): void
     {
-        $this->module->extensions = ['test'];
-        $this->module->additionalExtensions = ['abc'];
-        $this->assertSame(['test', 'abc'], $this->module->extensions);
-
         $this->module->poolConfig = ['d' => 'b'];
         $this->module->additionalPoolConfig = ['b' => 'c'];
         $this->assertSame(['d' => 'b', 'b' => 'c'], $this->module->poolConfig);
@@ -91,7 +52,7 @@ class ModuleTest extends \Codeception\Test\Unit
 
     public function testBuild(): void
     {
-        $this->module->createBuildContext($context = new Context(), __FUNCTION__, dirname(\Yii::getAlias('@app')));
+        $this->module->createBuildContext($context = new Context(), dirname(\Yii::getAlias('@app')));
         $directory = $context->getDirectory();
 
         $dockerFile = file_get_contents("$directory/Dockerfile");
@@ -106,7 +67,7 @@ class ModuleTest extends \Codeception\Test\Unit
     public function testBuildUsesConfiguredBaseImage(): void
     {
         $this->module->baseImage = 'test1234:5678';
-        $this->module->createBuildContext($context = new Context(), __FUNCTION__, dirname(\Yii::getAlias('@app')));
+        $this->module->createBuildContext($context = new Context(), dirname(\Yii::getAlias('@app')));
         $directory = $context->getDirectory();
 
         $lines = file("$directory/Dockerfile", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
@@ -120,15 +81,12 @@ class ModuleTest extends \Codeception\Test\Unit
         $this->assertNotNull($lastFrom);
         $this->assertMatchesRegularExpression("/^FROM\s*{$this->module->baseImage}/", $lastFrom);
     }
+
     public function testAdditionalSetters(): void
     {
-        $this->module->extensions = ['def'];
-        $this->module->additionalExtensions = ['abc'];
-
         $this->module->fpmConfig = ['a' => 'c'];
         $this->module->additionalFpmConfig = ['a' => 'b'];
         $this->assertSame(['a' => 'b'], $this->module->fpmConfig);
-
 
         $this->module->poolConfig = ['a' => 'b', 'c' => 'd'];
         $this->module->additionalPoolConfig = ['e' => 'f'];

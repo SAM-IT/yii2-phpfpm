@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 return [
     'class' => \yii\console\Application::class,
@@ -8,9 +9,6 @@ return [
     'modules' => [
         'phpFpm' => [
             'class' => \SamIT\Yii2\PhpFpm\Module::class,
-            'extensions' => [],
-            'push' => true,
-            'image' => \md5(\random_bytes(5))
         ]
     ]
 ];

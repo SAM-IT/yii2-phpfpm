@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace SamIT\Yii2\PhpFpm;
@@ -6,32 +7,23 @@ namespace SamIT\Yii2\PhpFpm;
 use SamIT\Docker\Context;
 use yii\base\InvalidConfigException;
 use yii\base\UnknownPropertyException;
-use yii\helpers\ArrayHelper;
 use yii\helpers\Console;
 
 /**
  * Class Module
  * @package SamIT\Yii2\PhpFpm
- * @property-write string[] $additionalExtensions
  * @property-write string|int[] $additionalPoolConfig
  * @property-write string[] $additionalPhpConfig
  * @property-write string[] $additionalFpmConfig
  */
-class Module extends \yii\base\Module
+final class Module extends \yii\base\Module
 {
     /**
-     * The variables will be written to /runtime/env.json as JSON, where your application can read them.
-     * @var string[] List of required environment variables. If one is missing the container will exit.
-     *
-     */
-    public $environmentVariables = [];
-
-    /**
-     * @var array Pool directives
+     * @var array<string, string|int> Pool directives
      * @see http://php.net/manual/en/install.fpm.configuration.php
      *
      */
-    public $poolConfig = [
+    public array $poolConfig = [
         'user' => 'nobody',
         'group' => 'nobody',
         'listen' => 9000,
@@ -46,67 +38,43 @@ class Module extends \yii\base\Module
     ];
 
     /**
-     * @var array PHP configuration, supplied via php_admin_value in fpm config.
+     * @var array<string, string> $phpConfig PHP configuration, supplied via php_admin_value in fpm config.
      */
-    public $phpConfig = [
+    public array $phpConfig = [
         'upload_max_filesize' => '20M',
         'post_max_size' => '25M'
     ];
 
     /**
-     * @var array Global directives
+     * @var array<string, string> $fpmConfig Global directives
      * @see http://php.net/manual/en/install.fpm.configuration.php
      *
      */
-    public $fpmConfig = [
+    public array $fpmConfig = [
         'error_log' => '/proc/self/fd/2',
         'daemonize' => 'no',
     ];
 
     /**
-     * List of php extensions to install
-     */
-    public $extensions = [
-        'ctype',
-        'gd',
-        'iconv',
-        'intl',
-        'json',
-        'mbstring',
-        'session',
-        'pdo_mysql',
-        'session',
-        'curl'
-    ];
-
-    /**
-     * @var string The name of the created image.
-     */
-    public $image;
-
-    /**
      * @var string The name of the base image to use for the container. Should contain php-fpm
      */
     public string $baseImage = 'php:7.4-fpm-alpine';
+
     /**
-     * @var string The tag of the created image.
+     * @var string $tag The tag of the created image.
      */
     public $tag = 'latest';
 
     /**
-     * @var bool wheter to push successful builds.
+     * @var string $composerFilePath Location of composer.json / composer.lock
      */
-    public $push = false;
-
-    /**
-     * @var string Location of composer.json / composer.lock
-     */
-    public $composerFilePath = '@app/../';
+    public string $composerFilePath = '@app/../';
 
     /**
      * @var string[] List of console commands that are executed upon container launch.
      */
     public $initializationCommands = [];
+
     /**
      * @return string A PHP-FPM config file.
      */
@@ -141,12 +109,6 @@ class Module extends \yii\base\Module
         // Get the route.
         $result = [];
         $result[] = '#!/bin/sh';
-        // Check for variables.
-        foreach ($this->environmentVariables as $name) {
-            $result[] = \strtr('if [ -z "${name}" -a ! -f "$SECRET_DIR/{name}" ]; then echo "Variable \${name} is required."; exit 1; fi', [
-                '{name}' => $name
-            ]);
-        }
 
         // Check if runtime directory is writable.
         $result[] = <<<SH
@@ -156,8 +118,6 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 SH;
-
-
 
         // Check if runtime is a tmpfs.
         $message = Console::ansiFormat('/runtime should really be a tmpfs.', [Console::FG_RED]);
@@ -176,7 +136,6 @@ if [ $? -ne 0 ]; then
 fi
 SH;
 
-
         foreach ($this->initializationCommands as $route) {
             $result[] = "$entryScript $route --interactive=0 || exit";
         }
@@ -185,14 +144,12 @@ SH;
     }
 
     /**
-     * @param Context $context The context to use
-     * @param string $version This is stored in the VERSION environment variable.
-     * @param string $sourcePath This is the path where app source is stored, it must be a top level dir, the project root is derived from it
+     * @param  Context                $context    The context to use
+     * @param  string                 $sourcePath This is the path where app source is stored, it must be a top level dir, the project root is derived from it
      * @throws InvalidConfigException
      */
     public function createBuildContext(
         Context $context,
-        string $version,
         string $sourcePath
     ): void {
         if (!is_dir($sourcePath)) {
@@ -205,7 +162,7 @@ SH;
          * BEGIN COMPOSER
          */
         $context->command('FROM composer');
-        $context->addFile('/build/composer.json', \Yii::getAlias($this->composerFilePath) .'/composer.json');
+        $context->addFile('/build/composer.json', \Yii::getAlias($this->composerFilePath) . '/composer.json');
 
         if (\file_exists(\Yii::getAlias($this->composerFilePath) . '/composer.lock')) {
             $context->addFile('/build/composer.lock', \Yii::getAlias($this->composerFilePath) . '/composer.lock');
@@ -222,9 +179,6 @@ SH;
 
         $context->from($this->baseImage);
         $context->run('apk add --update --no-cache jq');
-        $context->addUrl("/usr/local/bin/", "https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions");
-        $context->run("chmod +x /usr/local/bin/install-php-extensions");
-        $context->run('install-php-extensions ' . implode(' ', $this->extensions));
         $context->run('mkdir /runtime && chown nobody:nobody /runtime');
         $context->volume('/runtime');
         $context->copyFromLayer("/project", "0", "/build");
@@ -239,26 +193,28 @@ SH;
 
         $context->entrypoint(["/entrypoint.sh"]);
 
-        $context->env('VERSION', $version);
         // Test if we can run a console command.
         $context->run("[ -f $entryScript ]");
     }
 
     /**
      * @throws \InvalidArgumentException in case the app is not configured as expected
-     * @param string $sourcePath the path to the soruce files
-     * @return string the relative path of the (console) entry script with respect to the project (not app) root.
+     * @param  string                    $sourcePath the path to the soruce files
+     * @return string                    the relative path of the (console) entry script with respect to the project (not app) root.
      */
     private function getConsoleEntryScript(string $sourcePath): string
     {
-        $full = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), -1)[0]['file'];
+        $frame = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), -1)[0];
+        if (!isset($frame['file'])) {
+            throw new \RuntimeException('Could not find console entry script');
+        }
+        $full = $frame['file'];
         $projectRoot = dirname($sourcePath);
         if (strncmp($projectRoot, $full, strlen($projectRoot)) !== 0) {
             throw new \InvalidArgumentException("The console entry script must be located inside the project root; $full is not in $projectRoot");
         }
         return \ltrim(substr($full, strlen($projectRoot)), '/');
     }
-
 
     public function __set($name, $value): void
     {
@@ -267,15 +223,20 @@ SH;
             return;
         }
 
-
         $this->add(\lcfirst(\substr($name, 10)), $value);
     }
 
-    private function add($name, array $value): void
+    /**
+     * @param  string                   $name
+     * @param  array<string, mixed>     $value
+     * @return void
+     * @throws UnknownPropertyException
+     */
+    private function add(string $name, array $value): void
     {
         if (!\property_exists($this, $name)) {
             throw new UnknownPropertyException("Unknown property $name");
         }
-        $this->$name = ArrayHelper::merge($this->$name, $value);
+        $this->$name = [...$this->$name, ...$value];
     }
 }

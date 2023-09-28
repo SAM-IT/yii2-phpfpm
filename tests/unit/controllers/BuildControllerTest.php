@@ -1,9 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 namespace tests\controllers;
 
-class BuildControllerTest extends \Codeception\Test\Unit
+final class BuildControllerTest extends \Codeception\Test\Unit
 {
     /**
      * @var \SamIT\Yii2\PhpFpm\controllers\BuildController
