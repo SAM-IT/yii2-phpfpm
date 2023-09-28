@@ -37,10 +37,6 @@ jobs:
         run: composer install --prefer-dist
       - name: Run tests
         run: composer test -- --coverage-xml
-      - name: Get Ocular
-        run: wget https://scrutinizer-ci.com/ocular.phar
-      - name: Push code coverage
-        run: php ocular.phar code-coverage:upload --format=php-clover tests/_output/coverage.xml
   release:
     name: Automated release
     needs: [test, cs]
