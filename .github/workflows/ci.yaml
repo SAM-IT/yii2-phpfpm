@@ -1,5 +1,9 @@
 name: Continous integration
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - master
 jobs:
   cs:
     name: Check code style
@@ -16,7 +20,7 @@ jobs:
       matrix:
         php: ['8.1', '8.2']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
