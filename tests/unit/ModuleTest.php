@@ -52,8 +52,9 @@ final class ModuleTest extends \Codeception\Test\Unit
 
     public function testBuild(): void
     {
-        $this->module->createBuildContext($context = new Context(), __FUNCTION__, dirname(\Yii::getAlias('@app')));
+        $this->module->createBuildContext($context = new Context(), dirname(\Yii::getAlias('@app')));
         $directory = $context->getDirectory();
+
 
         $dockerFile = file_get_contents("$directory/Dockerfile");
 
@@ -67,7 +68,7 @@ final class ModuleTest extends \Codeception\Test\Unit
     public function testBuildUsesConfiguredBaseImage(): void
     {
         $this->module->baseImage = 'test1234:5678';
-        $this->module->createBuildContext($context = new Context(), __FUNCTION__, dirname(\Yii::getAlias('@app')));
+        $this->module->createBuildContext($context = new Context(), dirname(\Yii::getAlias('@app')));
         $directory = $context->getDirectory();
 
         $lines = file("$directory/Dockerfile", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);

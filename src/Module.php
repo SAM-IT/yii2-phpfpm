@@ -237,6 +237,6 @@ SH;
         if (!\property_exists($this, $name)) {
             throw new UnknownPropertyException("Unknown property $name");
         }
-        $this->$name = [...$this->$name, $value];
+        $this->$name = [...$this->$name, ...$value];
     }
 }
