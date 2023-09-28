@@ -55,7 +55,6 @@ final class ModuleTest extends \Codeception\Test\Unit
         $this->module->createBuildContext($context = new Context(), dirname(\Yii::getAlias('@app')));
         $directory = $context->getDirectory();
 
-
         $dockerFile = file_get_contents("$directory/Dockerfile");
 
         $fileName = \preg_replace('#.*ADD (.+?) /php-fpm\.conf.*#s', '$2', $dockerFile);
