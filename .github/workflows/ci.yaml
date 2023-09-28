@@ -49,4 +49,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 permissions:
   packages: read
-  contents: read
+  contents: write
