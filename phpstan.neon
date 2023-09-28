@@ -1,0 +1,14 @@
+parameters:
+    parallel:
+        maximumNumberOfProcesses: 14
+        minimumNumberOfJobsPerProcess: 2
+    reportUnmatchedIgnoredErrors: false
+    bootstrapFiles:
+      - 'tests/_bootstrap.php'
+    level: 8
+    paths:
+      - src
+    excludePaths:
+      - */tests/*
+    checkMaybeUndefinedVariables: true
+    checkGenericClassInNonGenericObjectType: false

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 namespace tests;
 
 /**
@@ -16,7 +18,7 @@ namespace tests;
  *
  * @SuppressWarnings(PHPMD)
 */
-class UnitTester extends \Codeception\Actor
+final class UnitTester extends \Codeception\Actor
 {
     use _generated\UnitTesterActions;
 

@@ -10,8 +10,8 @@
         }
     ],
     "require": {
-        "php": "^7.4 | > 8",
-        "sam-it/docker-php": ">= 1.0.5"
+        "php": ">= 8.1",
+        "sam-it/docker-php": "^2"
     },
     "repositories": [
         {
@@ -25,28 +25,19 @@
         }
     },
     "require-dev": {
-        "squizlabs/php_codesniffer": "^3.5",
         "codeception/codeception": "> 4",
         "yiisoft/yii2": "> 2",
-        "brainmaestro/composer-git-hooks": "^2.8",
-        "codeception/module-yii2": "^1.1"
-    },
-    "extra": {
-        "hooks": {
-            "pre-commit": [
-                "echo committing as $(git config user.name) &&",
-                "composer lint-fix  &&",
-                "composer lint &&",
-                "composer test"
-            ],
-            "commit-msg": [
-                "npx commitlint -e $1"
-            ]
-        }
+        "codeception/module-yii2": "^1.1",
+        "symplify/easy-coding-standard": "^12.0",
+        "phpstan/phpstan": "^1.10",
+        "captainhook/captainhook": "^5.16"
     },
     "scripts": {
-        "lint": "vendor/bin/phpcs",
-        "lint-fix": "vendor/bin/phpcbf",
-        "test": "codecept run --coverage"
+        "test": "codecept run --coverage-html"
+    },
+    "config": {
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true
+        }
     }
 }
