@@ -174,7 +174,7 @@ SH;
 
         $context->from($this->baseImage);
         $context->run('apk add --update --no-cache jq');
-        $context->run('mkdir /runtime && chown nobody:nobody /runtime');
+        $context->run('mkdir -p /runtime && chown nobody:nobody /runtime');
         $context->volume('/runtime');
         $context->copyFromLayer("/project", "0", "/build");
 
