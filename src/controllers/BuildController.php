@@ -12,7 +12,6 @@ use yii\helpers\Console;
 
 /**
  * Class BuildController
- * @package SamIT\Yii2\PhpFpm\controllers
  * @property Module $module
  */
 final class BuildController extends Controller
@@ -42,18 +41,6 @@ final class BuildController extends Controller
     public function actionTestClient(): void
     {
         $this->stdout("It seems the console client works!\n", Console::FG_GREEN);
-    }
-
-    public function options($actionID): array
-    {
-        $result = parent::options($actionID);
-        switch ($actionID) {
-            case 'create-context':
-            case 'build':
-                $result[] = 'tag';
-                break;
-        }
-        return $result;
     }
 
     public function stdout($string): int

@@ -61,24 +61,19 @@ final class Module extends \yii\base\Module
     public string $baseImage = 'php:7.4-fpm-alpine';
 
     /**
-     * @var string $tag The tag of the created image.
-     */
-    public $tag = 'latest';
-
-    /**
      * @var string $composerFilePath Location of composer.json / composer.lock
      */
     public string $composerFilePath = '@app/../';
 
     /**
-     * @var string[] List of console commands that are executed upon container launch.
+     * @var list<string> List of console commands that are executed upon container launch.
      */
-    public $initializationCommands = [];
+    public array $initializationCommands = [];
 
     /**
      * @return string A PHP-FPM config file.
      */
-    protected function createFpmConfig()
+    protected function createFpmConfig(): string
     {
         $config = [];
         // Add global directives.
