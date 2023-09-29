@@ -124,7 +124,7 @@ fi
 SH;
         $result[] = <<<SH
 su nobody -s /bin/touch /runtime/env.json
-(test -d \$SECRET_DIR && cd \$SECRET_DIR && find * -type f -exec jq -sR '{(input_filename):.}' {} \; ) | jq -s 'env+add' > /runtime/env.json
+jq -n -s 'env' > /runtime/env.json
 if [ $? -ne 0 ]; then
   echo "failed to store env in /runtime/env.json";
   exit 1
