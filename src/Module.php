@@ -45,6 +45,8 @@ final class Module extends \yii\base\Module
         'post_max_size' => '25M'
     ];
 
+    public string $envJsonFile = '/runtime/env.json';
+
     /**
      * @var array<string, string> $fpmConfig Global directives
      * @see http://php.net/manual/en/install.fpm.configuration.php
@@ -105,28 +107,11 @@ final class Module extends \yii\base\Module
         $result = [];
         $result[] = '#!/bin/sh';
 
-        // Check if runtime directory is writable.
         $result[] = <<<SH
-su nobody -s /bin/touch /runtime/testfile && rm /runtime/testfile;
+su nobody -s /bin/touch {$this->envJsonFile}
+jq -n -s 'env' > {$this->envJsonFile}
 if [ $? -ne 0 ]; then
-  echo Runtime directory is not writable;
-  exit 1
-fi
-SH;
-
-        // Check if runtime is a tmpfs.
-        $message = Console::ansiFormat('/runtime should really be a tmpfs.', [Console::FG_RED]);
-        $result[] = <<<SH
-grep 'tmpfs /runtime' /proc/mounts;
-if [ $? -ne 0 ]; then
-  echo $message;
-fi
-SH;
-        $result[] = <<<SH
-su nobody -s /bin/touch /runtime/env.json
-jq -n -s 'env' > /runtime/env.json
-if [ $? -ne 0 ]; then
-  echo "failed to store env in /runtime/env.json";
+  echo "failed to store env in {$this->envJsonFile}";
   exit 1
 fi
 SH;
