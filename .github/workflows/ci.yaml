@@ -1,4 +1,4 @@
-name: Continous integration
+name: Continuous integration
 on:
   pull_request:
   push:
@@ -34,10 +34,10 @@ jobs:
     needs: [test, cs]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: lts
       - run: >
           npx
           -p "@semantic-release/commit-analyzer"
